@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block content %}
+  <h1>Admin Dashboard</h1>
+  <div class="grid">
+    <div class="stat"><h3>{{ stats.users }}</h3><p>Total Users</p></div>
+    <div class="stat"><h3>{{ stats.events }}</h3><p>Total Events</p></div>
+    <div class="stat"><h3>{{ stats.bookings }}</h3><p>Total Bookings</p></div>
+    <div class="stat"><h3>₹{{ stats.revenue }}</h3><p>Total Revenue</p></div>
+  </div>
+  <div class="grid" style="margin-top:20px">
+    <div class="card">
+      <h2>Quick Actions</h2>
+      <div class="actions">
+        <a class="btn" href="{{ url_for('event.web_create_event') }}">Create Event</a>
+        <a class="btn secondary" href="{{ url_for('venue.web_create_venue') }}">Create Venue</a>
+        <a class="btn secondary" href="{{ url_for('coupon.web_create_coupon') }}">Create Coupon</a>
+        <a class="btn danger" href="{{ url_for('event.web_get_events') }}">Delete Event</a>
+        <a class="btn danger" href="{{ url_for('venue.web_get_venues') }}">Delete Venue</a>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Pending Events</h2>
+      {% for event in pending_events %}
+        <p><b>{{ event.name }}</b> <a class="btn secondary" href="{{ url_for('event.web_event_details', event_id=event.id) }}">Review</a></p>
+      {% else %}
+        <p class="muted">No pending events.</p>
+      {% endfor %}
+    </div>
+  </div>
+{% endblock %}

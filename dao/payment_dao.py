@@ -11,10 +11,16 @@ class PaymentDAO:
     def get_by_id(self, payment_id):
         return Payment.query.get(payment_id)
 
+    def get_and_lock_by_id(self, payment_id):
+        return Payment.query.filter_by(id=payment_id).with_for_update().first()
+
     def get_by_booking(self, booking_id):
         return Payment.query.filter_by(
             booking_id=booking_id
         ).first()
+
+    def get_and_lock_by_booking(self, booking_id):
+        return Payment.query.filter_by(booking_id=booking_id).with_for_update().first()
 
     def get_by_transaction(self, transaction_id):
         return Payment.query.filter_by(

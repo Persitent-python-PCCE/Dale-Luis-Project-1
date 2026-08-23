@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block content %}
+  <h1>Reviews for {{ event.name }}</h1>
+  {% if current_user.get('role') == 'CUSTOMER' %}
+    <div class="card">
+      <form method="POST" action="{{ url_for('review.web_add_review', event_id=event.id) }}">
+        <div class="form-group">
+          <label>Rating</label>
+          <select name="rating">
+            <option value="5">5 - Excellent</option>
+            <option value="4">4 - Good</option>
+            <option value="3">3 - Average</option>
+            <option value="2">2 - Poor</option>
+            <option value="1">1 - Bad</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Review</label>
+          <textarea name="comment"></textarea>
+        </div>
+        <button class="btn">Submit Review</button>
+      </form>
+    </div>
+  {% endif %}
+  <div class="grid" style="margin-top:20px">
+    {% for review in reviews %}
+      <div class="card">
+        <b>{{ review.user.name }}</b>
+        <div class="rating">★ {{ review.rating }}/5</div>
+        <p>{{ review.review_text }}</p></div>
+    {% else %}<p class="muted">No reviews yet.</p>{% endfor %}
+  </div>
+{% endblock %}

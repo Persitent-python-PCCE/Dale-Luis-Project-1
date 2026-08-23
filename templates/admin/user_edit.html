@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="card">
+        <h1>Edit {{ user.name }}</h1>
+        <form method="POST">
+            <div class="grid">
+                <div class="form-group">
+                    <label>Name</label>
+                    <input name="name" value="{{ user.name }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" value="{{ user.email }}" required>
+                </div>
+                <div class="form-group"><label>Phone</label>
+                    <input name="phone" value="{{ user.phone or '' }}">
+                </div>
+                <div class="form-group">
+                    <label>Role</label>
+                    <select name="role">
+                        {% for role in ['CUSTOMER', 'EVENT_MANAGER', 'ADMIN'] %}
+                        <option value="{{ role }}" {% if user.role == role %}selected{% endif %}>{{ role }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <button class="btn">Save Changes</button>
+        </form>
+    </div>
+{% endblock %}

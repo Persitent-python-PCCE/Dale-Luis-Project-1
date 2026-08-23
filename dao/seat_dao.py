@@ -9,8 +9,32 @@ class SeatDAO:
             is_active=True
         ).all()
 
-    def get_by_id(self, seat_id):
-        return Seat.query.get(seat_id)
+    def get_by_id(self, id):
+        return Seat.query.get(id)
+    
+    def get_by_event_and_seat_number(self,event_id,seat_number):
+        
+        return Seat.query.filter_by(
+            event_id=event_id,
+            seat_number=seat_number).first()
+    
+    def get_and_lock_seat(self,seat_id):
+        seat = Seat.query.filter_by(id = seat_id).with_for_update().first()
+        
+        return seat
+    
+    def get_and_lock_seats(self,seat_ids):
+        # Acquire locks in a consistent order to reduce deadlocks when two
+        # customers try to reserve overlapping sets of seats.
+        seats = (
+            Seat.query
+            .filter(Seat.id.in_(sorted(seat_ids)))
+            .order_by(Seat.id)
+            .with_for_update()
+            .all()
+        )
+
+        return seats
 
     def get_by_venue(self, venue_id):
         return Seat.query.filter_by(

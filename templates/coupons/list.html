@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+    <h1 style="margin:0">Coupons</h1>
+    <a class="btn" style="width:auto;white-space:nowrap" href="{{ url_for('coupon.web_create_coupon') }}">Create Coupon</a>
+  </div>
+  <table>
+    <tr><th>Code</th><th>Discount</th><th>Usage</th><th>Valid Until</th><th>Status</th><th>Action</th></tr>
+    {% for coupon in coupons %}
+      <tr>
+        <td><b>{{ coupon.code }}</b></td>
+        <td>{{ coupon.discount_value }} {{ '%' if coupon.discount_type == 'PERCENTAGE' else '₹' }}</td>
+        <td>{{ coupon.used_count }}/{{ coupon.usage_limit }}</td>
+        <td>{{ coupon.valid_until }}</td>
+        <td>{{ 'Active' if coupon.is_active else 'Inactive' }}</td>
+        <td><a class="btn secondary" href="{{ url_for('coupon.web_edit_coupon', coupon_id=coupon.id) }}">Edit</a></td>
+      </tr>
+    {% else %}<tr><td colspan="6">No coupons found.</td></tr>{% endfor %}
+  </table>
+{% endblock %}

@@ -59,3 +59,19 @@ class Booking(db.Model):
 
     def __repr__(self):
         return f"<Booking {self.booking_reference}>"
+
+    def to_dict(self):
+        return {
+            "id": self.id, 
+            "booking_reference": self.booking_reference,
+            "user_id": self.user_id, 
+            "event_id": self.event_id,
+            "total_amount": float(self.total_amount),
+            "discount_amount": float(self.discount_amount or 0),
+            "final_amount": float(self.final_amount), 
+            "coupon_id": self.coupon_id,
+            "status": self.status,
+            "booking_date": self.booking_date.isoformat() if self.booking_date else None,
+            "cancelled_at": self.cancelled_at.isoformat() if self.cancelled_at else None,
+            "cancellation_reason": self.cancellation_reason,
+        }

@@ -1,4 +1,8 @@
 from models.event import Event
+from models.booking import Booking
+from models.booking_item import BookingItem
+from models.payment import Payment
+from models.review import Review
 from config.database import db
 from datetime import datetime
 
@@ -38,6 +42,18 @@ class EventDAO:
             Event.approval_status == "APPROVED"
         ).all()
 
+    def filter_approved_events(self, search=None, category_id=None, event_date=None):
+        query = Event.query.filter_by(approval_status="APPROVED")
+
+        if search:
+            query = query.filter(Event.name.ilike(f"%{search}%"))
+        if category_id:
+            query = query.filter(Event.category_id == category_id)
+        if event_date:
+            query = query.filter(Event.start_date == event_date)
+
+        return query.order_by(Event.start_date, Event.start_time).all()
+
     def get_pending_events(self):
         return Event.query.filter_by(
             approval_status="PENDING"
@@ -59,8 +75,35 @@ class EventDAO:
         return event
 
     def delete(self, event):
-        db.session.delete(event)
-        db.session.commit()
+        """Permanently delete an event and data that depends on it."""
+        try:
+            booking_ids = [
+                booking_id for (booking_id,) in db.session.query(Booking.id)
+                .filter(Booking.event_id == event.id)
+                .all()
+            ]
+
+            db.session.query(Review).filter(Review.event_id == event.id).delete(
+                synchronize_session=False
+            )
+            if booking_ids:
+                db.session.query(Payment).filter(Payment.booking_id.in_(booking_ids)).delete(
+                    synchronize_session=False
+                )
+                db.session.query(BookingItem).filter(
+                    BookingItem.booking_id.in_(booking_ids)
+                ).delete(synchronize_session=False)
+            db.session.query(BookingItem).filter(BookingItem.event_id == event.id).delete(
+                synchronize_session=False
+            )
+            db.session.query(Booking).filter(Booking.event_id == event.id).delete(
+                synchronize_session=False
+            )
+            db.session.delete(event)
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            raise
 
     def approve(self, event, admin_id):
         event.approval_status = "APPROVED"

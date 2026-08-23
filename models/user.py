@@ -68,3 +68,15 @@ class User(db.Model):
     
     def __repr__(self):
         return f"<User {self.email}>"
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "email": self.email,
+            "phone": self.phone,
+            "role": self.role,
+            "is_active": self.is_active,
+            "last_login_at": self.last_login_at.isoformat() if self.last_login_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }

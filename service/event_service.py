@@ -23,6 +23,9 @@ class EventService:
     
     def search_events(self, name):
         return self.event_dao.search_by_name(name)
+
+    def filter_events(self, search=None, category_id=None, event_date=None):
+        return self.event_dao.filter_approved_events(search, category_id, event_date)
     
     def get_events_by_category(self,category_id):
         return self.event_dao.get_by_category(category_id)
@@ -134,10 +137,10 @@ class EventService:
 
         return self.event_dao.update(event)
     
-    def delete_event(self,id,manager_id):
+    def delete_event(self, id, manager_id, is_admin=False):
         event = self.get_event(id)
 
-        if event.created_by != manager_id:
+        if event.created_by != manager_id and not is_admin:
             raise ValueError(
                 "You can only delete your own events"
             )

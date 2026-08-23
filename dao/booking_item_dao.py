@@ -34,9 +34,16 @@ class BookingItemDAO:
             .filter(
                 BookingItem.event_id == event_id,
                 BookingItem.seat_id == seat_id,
-                Booking.status == "CONFIRMED",
+                # A pending booking reserves its seats until it is cancelled;
+                # otherwise concurrent requests could both reserve the seat
+                # before either payment is confirmed.
+                Booking.status.in_(["PENDING", "CONFIRMED"]),
                 BookingItem.ticket_status == "VALID"
             )
+            # This must be a current (locking) read.  MySQL's ordinary reads
+            # may retain an older transaction snapshot after waiting for the
+            # seat lock above.
+            .with_for_update()
             .first()
         )
 

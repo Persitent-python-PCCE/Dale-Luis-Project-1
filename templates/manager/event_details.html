@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="card">
+        <h1>{{ event.name }}</h1>
+        <p><span class="badge">{{ event.category }}</span></p>
+        <p>{{ event.description }}</p>
+        <img src="{{ url_for('static', filename=event.poster_path) if event.poster_path else 'https://placehold.co/800x500?text=Event' }}" alt="{{ event.name }} poster" style="width:100%;max-height:380px;object-fit:cover;border-radius:14px;margin-bottom:20px">
+        <div class="detail-grid">
+            <div>
+                <p><b>Date:</b> {{ event.start_date }} - {{ event.end_date }}</p>
+                <p><b>Venue:</b> {{ event.venue.name if event.venue else '-' }}</p>
+                <p><b>Status:</b> {{ event.status }}</p>
+            </div>
+            <div>
+                <p><b>Approval:</b> {{ event.approval_status }}</p>
+                <p><b>VIP:</b> ₹{{ event.vip_price }}</p>
+                <p><b>Premium:</b> ₹{{ event.premium_price }}</p>
+                <p><b>Regular:</b> ₹{{ event.regular_price }}</p>
+            </div>
+        </div>
+        {% if event.approval_status == 'REJECTED' %}
+        <p class="muted">
+            <b>This event was rejected.</b> {{ event.rejection_reason or '' }}
+        </p>
+        {% endif %}
+        <a class="btn" href="{{ url_for('event.web_update_event', event_id=event.id) }}">Edit Event</a>
+    </div>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h1>{{ venue.name }}</h1>
+    <p><b>Location:</b> {{ venue.location }}</p>
+    <p><b>Address:</b> {{ venue.address }}</p>
+    <p><b>Maximum Capacity:</b> {{ venue.maximum_capacity }}</p>
+    <p><b>Description:</b> {{ venue.description }}</p>
+    <a class="btn secondary" href="{{ url_for('venue.web_edit_venue', venue_id=venue.id) }}">Edit Venue</a>
+</div>
+{% endblock %}

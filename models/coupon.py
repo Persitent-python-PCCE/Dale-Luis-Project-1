@@ -49,3 +49,20 @@ class Coupon(db.Model):
     def __repr__(self):
         
         return f"<Coupon {self.code}>"
+
+    def to_dict(self):
+        return {
+            "id": self.id, "code": self.code, 
+            "description": self.description,
+            "discount_type": self.discount_type,
+            "discount_value": float(self.discount_value),
+            "minimum_amount": float(self.minimum_amount or 0),
+            "maximum_discount": float(self.maximum_discount) if self.maximum_discount is not None else None,
+            "usage_limit": self.usage_limit, 
+            "used_count": self.used_count,
+            "valid_from": self.valid_from.isoformat() if self.valid_from else None,
+            "valid_until": self.valid_until.isoformat() if self.valid_until else None,
+            "is_active": self.is_active, 
+            "created_by": self.created_by,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }

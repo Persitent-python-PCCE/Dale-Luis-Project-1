@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h1>Edit Venue</h1>
+    <form method="POST">
+        <div class="grid">
+            <div class="form-group">
+                <label>Name</label>
+                <input name="name" value="{{ venue.name }}">
+            </div>
+            <div class="form-group">
+                <label>Location</label>
+                <input name="location" value="{{ venue.location }}">
+            </div>
+            <div class="form-group">
+                <label>Maximum Capacity</label>
+                <input name="maximum_capacity" value="{{ venue.maximum_capacity }}">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Address</label>
+            <textarea name="address">{{ venue.address }}</textarea>
+        </div><div class="form-group">
+            <label>Description</label>
+            <textarea name="description">{{ venue.description }}</textarea>
+        </div><button class="btn">Save Changes</button>
+    </form>
+</div>
+{% endblock %}

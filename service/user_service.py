@@ -9,7 +9,6 @@ class UserService:
         return self.user_dao.get_all()
     
     def register(self,data):
-        
         name= data.get("name")
         email= data.get("email")
         password = data.get("password")
@@ -48,7 +47,6 @@ class UserService:
         return self.user_dao.save(user)
     
     def login(self,email,password):
-        
         user = self.user_dao.get_by_email(email)
         
         if user is None:
@@ -58,7 +56,6 @@ class UserService:
             raise ValueError("Account is deactivated")
         
         stored_hash = user.pass_hash.encode("utf-8")
-        
         pass_bytes = password.encode("utf-8")
         
         if not bcrypt.checkpw(pass_bytes, stored_hash):
@@ -110,7 +107,7 @@ class UserService:
         user = self.get_user(id)
         
         if user.is_active:
-            raise ValueError("USer is already active")
+            raise ValueError("User is already active")
         
         user.is_active = True
         

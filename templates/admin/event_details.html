@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block content %}
+  <div class="card">
+    <h1>{{ event.name }}</h1>
+    <p><span class="badge">{{ event.category }}</span></p>
+    <p>{{ event.description }}</p>
+    <div class="detail-grid">
+      <div>
+        <p><b>Date:</b> {{ event.start_date }} - {{ event.end_date }}</p>
+        <p><b>Time:</b> {{ event.start_time }} - {{ event.end_time }}</p>
+        <p><b>Venue:</b> {{ event.venue.name if event.venue else '-' }}</p>
+      </div>
+      <div>
+        <p><b>Status:</b> {{ event.status }}</p>
+        <p><b>Approval:</b> {{ event.approval_status }}</p>
+        <p><b>Regular price:</b> ₹{{ event.regular_price }}</p>
+      </div>
+    </div>
+    {% if event.approval_status == 'PENDING' %}
+      <form method="POST" action="{{ url_for('event.web_approve_event', event_id=event.id) }}" style="display:inline">
+        <button class="btn">Approve Event</button>
+      </form>
+      <form method="POST" action="{{ url_for('event.web_reject_event', event_id=event.id) }}" style="display:inline">
+        <button class="btn danger" onclick="return confirm('Reject this event? It will remain visible to administrators.')">Reject Event</button>
+      </form>
+    {% elif event.approval_status == 'REJECTED' %}
+      <p class="muted">
+        <b>This event has been rejected.</b> {{ event.rejection_reason or '' }}
+      </p>
+      <form method="POST" action="{{ url_for('event.web_delete_event', event_id=event.id) }}">
+        <button class="btn danger" onclick="return confirm('Permanently delete this rejected event?')">Delete Event</button>
+      </form>
+    {% else %}
+      <form method="POST" action="{{ url_for('event.web_delete_event', event_id=event.id) }}">
+        <button class="btn danger" onclick="return confirm('Permanently delete this event?')">Delete Event</button>
+      </form>
+    {% endif %}
+  </div>
+{% endblock %}

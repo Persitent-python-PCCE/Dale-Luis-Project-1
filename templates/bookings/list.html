@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>My Bookings</h1>
+<div class="grid">
+    {% for booking in bookings %}
+    <div class="card">
+        <span class="badge {{ 'status-success' if booking.status == 'CONFIRMED' else 'status-warning' }}">{{ booking.status }}</span>
+        <h2>{{ booking.event.name if booking.event else 'Event' }}</h2>
+        <p>Reference: <b>{{ booking.booking_reference }}</b></p>
+        <p>Total: ₹{{ booking.final_amount }}</p>
+        <div class="actions"><a class="btn" href="{{ url_for('booking.web_booking_details', booking_id=booking.id) }}">View Ticket</a>
+            {% if booking.status == 'CONFIRMED' %}
+            <form method="POST" action="{{ url_for('booking.web_cancel_booking', booking_id=booking.id) }}">
+                <button class="btn danger">Cancel</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <p>No bookings found.</p>
+    {% endfor %}
+</div>
+{% endblock %}

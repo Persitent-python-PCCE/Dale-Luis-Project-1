@@ -1,4 +1,7 @@
 from models.venue import Venue
+from models.event import Event
+from models.seat import Seat
+from dao.event_dao import EventDAO
 from config.database import db
 
 
@@ -33,6 +36,18 @@ class VenueDAO:
         return venue
 
     def delete(self, venue):
-        venue.is_active = False
-        db.session.commit()
-        return venue 
+        """Permanently delete a venue, all its events, and its seats."""
+        try:
+            events = Event.query.filter_by(venue_id=venue.id).all()
+            event_dao = EventDAO()
+            for event in events:
+                event_dao.delete(event)
+
+            db.session.query(Seat).filter(Seat.venue_id == venue.id).delete(
+                synchronize_session=False
+            )
+            db.session.delete(venue)
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            raise

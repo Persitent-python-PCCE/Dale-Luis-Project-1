@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="hero">
+    <h1>Find your next experience</h1>
+    <p>Concerts, movies, sports, theatre and more.</p>
+</section>
+<form class="searchbar" method="GET">
+    <input name="search" placeholder="Search event name..." value="{{ request.args.get('search','') }}">
+    <select name="category">
+        <option value="">All Categories</option>
+        {% for c in categories|default([]) %}
+        <option>{{ c }}</option>{% endfor %}
+    </select>
+    <input type="date" name="date">
+    <button class="btn">Search</button>
+</form>
+<div class="grid">
+    {% for event in events %}
+    <article class="card event-card">
+        <img src="{{ url_for('static', filename=event.poster_path) if event.poster_path else 'https://placehold.co/600x400?text=Event' }}" alt="{{ event.name }} poster">
+        <div class="event-content">
+            <span class="badge">{{ event.category }}</span>
+            <h2>{{ event.name }}</h2>
+            <p class="muted">{{ event.start_date }} • {{ event.venue.name if event.venue else 'Venue TBA' }}</p>
+            <p>From ₹{{ event.regular_price }}</p>
+            <a class="btn" href="{{ url_for('event.web_event_details', event_id=event.id) }}">View Event</a>
+        </div>
+    </article>
+    {% else %}
+    <p>No events found.</p>
+    {% endfor %}
+</div>
+{% endblock %}

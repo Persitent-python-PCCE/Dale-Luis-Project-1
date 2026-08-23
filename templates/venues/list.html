@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="actions" style="justify-content:space-between">
+    <h1>Venues</h1>
+    {% if current_user.get('role') == 'ADMIN' %}
+    <a class="btn" href="{{ url_for('venue.web_create_venue') }}">Add Venue</a>
+    {% endif %}
+</div>
+<div class="grid">
+    {% for venue in venues %}
+    <div class="card">
+        <h2>{{ venue.name }}</h2>
+        <p class="muted">{{ venue.location }}</p>
+        <p>Capacity: {{ venue.maximum_capacity }}</p>
+        <a class="btn secondary" href="{{ url_for('venue.web_venue_details', venue_id=venue.id) }}">View</a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

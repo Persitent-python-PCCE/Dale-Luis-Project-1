@@ -23,3 +23,11 @@ class UserEventPreference(db.Model):
         db.UniqueConstraint("user_id","category_id",
             name="uq_user_category_preference"),
         )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "category_id": self.category_id,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }

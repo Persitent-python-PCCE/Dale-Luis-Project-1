@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Select Seats{% endblock %}
+{% block content %}
+  <div class="card">
+    <h1>Select seats for {{ event.name }}</h1>
+    <p class="muted">Choose one or more available seats, then continue to payment.</p>
+    <form method="POST" action="{{ url_for('booking.web_create_booking') }}">
+      <input type="hidden" name="event_id" value="{{ event.id }}">
+      <div class="grid">
+        {% for seat in seats %}
+          <label class="card" style="cursor:pointer">
+            <input type="checkbox" name="seat_ids" value="{{ seat.id }}">
+            <b>{{ seat.seat_number }}</b><br>
+            <span class="muted">{{ seat.category }} · Row {{ seat.row_name }}</span>
+          </label>
+        {% else %}
+          <p>No seats are currently available for this event.</p>
+        {% endfor %}
+      </div>
+      {% if seats %}<button class="btn" type="submit">Continue to Payment</button>{% endif %}
+    </form>
+  </div>
+{% endblock %}

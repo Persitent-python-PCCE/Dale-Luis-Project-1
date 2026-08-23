@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block content %}
+  <style>.management-table{width:100%}.management-table th:last-child,.management-table td:last-child{white-space:nowrap}</style>
+  <div class="actions" style="justify-content:space-between"><h1>Venues</h1></div>
+  <table class="management-table">
+    <tr><th>Name</th><th>City</th><th>Capacity</th><th>Status</th><th>Action</th></tr>
+    {% for venue in venues %}
+      <tr>
+        <td>{{ venue.name }}</td><td>{{ venue.city }}</td><td>{{ venue.capacity }}</td><td>{{ 'Active' if venue.is_active else 'Inactive' }}</td>
+        <td><a class="btn secondary" href="{{ url_for('venue.web_get_venue', venue_id=venue.id) }}">View</a>
+          <form method="POST" action="{{ url_for('venue.web_delete_venue', venue_id=venue.id) }}" style="display:inline">
+            <button class="btn danger" onclick="return confirm('Delete this venue?')">Delete</button>
+          </form>
+        </td>
+      </tr>
+    {% else %}<tr><td colspan="5">No venues found.</td></tr>{% endfor %}
+  </table>
+{% endblock %}

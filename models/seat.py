@@ -36,3 +36,14 @@ class Seat(db.Model):
 
     def __repr__(self):
         return f"<Seat {self.seat_number}>"
+
+    def to_dict(self):
+        return {
+            "id": self.id, 
+            "venue_id": self.venue_id,
+            "seat_number": self.seat_number, 
+            "row_name": self.row_name,
+            "category": self.category, 
+            "base_price": float(self.base_price),
+            "is_active": self.is_active,
+        }

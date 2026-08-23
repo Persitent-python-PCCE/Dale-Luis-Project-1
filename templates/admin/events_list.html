@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+  <style>.management-table{width:auto;min-width:0}.management-table th:last-child,.management-table td:last-child{white-space:nowrap}</style>
+  <div class="actions" style="justify-content:space-between"><h1>Events</h1></div>
+  <table class="management-table">
+    <tr><th>Name</th><th>Category</th><th>Venue</th><th>Date</th><th>Status</th><th>Action</th></tr>
+    {% for event in events %}
+      <tr>
+        <td>{{ event.name }}</td><td>{{ event.category }}</td><td>{{ event.venue.name if event.venue else '-' }}</td>
+        <td>{{ event.start_date }}</td><td>{{ event.status }}</td>
+        <td>
+          <div class="actions" style="flex-wrap:nowrap;align-items:center">
+            <a class="btn secondary" href="{{ url_for('event.web_get_event', event_id=event.id) }}">View</a>
+          {% if event.approval_status == 'PENDING' %}
+            <form method="POST" action="{{ url_for('event.web_approve_event', event_id=event.id) }}" style="display:inline"><button class="btn">Approve</button></form>
+            <form method="POST" action="{{ url_for('event.web_reject_event', event_id=event.id) }}" style="display:inline"><button class="btn danger" onclick="return confirm('Reject this event? It will remain visible to administrators.')">Reject</button></form>
+          {% elif event.approval_status == 'REJECTED' %}
+            <span class="badge status-warning">Rejected</span>
+            <form method="POST" action="{{ url_for('event.web_delete_event', event_id=event.id) }}" style="display:inline"><button class="btn danger" onclick="return confirm('Permanently delete this rejected event?')">Delete</button></form>
+          {% else %}
+            <span class="badge status-success">Approved</span>
+            <form method="POST" action="{{ url_for('event.web_delete_event', event_id=event.id) }}" style="display:inline"><button class="btn danger" onclick="return confirm('Permanently delete this event?')">Delete</button></form>
+          {% endif %}</div>
+        </td>
+      </tr>
+    {% else %}<tr><td colspan="6">No events found.</td></tr>{% endfor %}
+  </table>
+{% endblock %}

@@ -59,3 +59,18 @@ class Payment(db.Model):
 
     def __repr__(self):
         return f"<Payment {self.transaction_id}>"
+
+    def to_dict(self):
+        return {
+            "id": self.id, 
+            "booking_id": self.booking_id,
+            "transaction_id": self.transaction_id,
+            "payment_method": self.payment_method, 
+            "amount": float(self.amount),
+            "status": self.status, 
+            "paid_at": self.paid_at.isoformat() if self.paid_at else None,
+            "refund_status": self.refund_status,
+            "refund_amount": float(self.refund_amount) if self.refund_amount is not None else None,
+            "refunded_at": self.refunded_at.isoformat() if self.refunded_at else None,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }

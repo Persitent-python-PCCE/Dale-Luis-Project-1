@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %}TicketFlow{% endblock %}</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    </head>
+    <body>
+        {% if current_user %}
+            <nav class="navbar">
+                <a class="brand" href="{{ url_for('event.web_get_events') }}">🎟 TicketFlow</a>
+                <div class="nav-links">
+                    {% if current_user.get('role') == 'ADMIN' %}
+                        <a href="{{ url_for('admin.web_dashboard') }}">Dashboard</a>
+                        <a href="{{ url_for('event.web_get_events') }}">View Events</a>
+                        <a href="{{ url_for('venue.web_get_venues') }}">View Venues</a>
+                        <a href="{{ url_for('coupon.web_get_coupons') }}">View Coupons</a>
+                        <a href="{{ url_for('user.web_get_users') }}">View Users</a>
+                    {% elif current_user.get('role') == 'EVENT_MANAGER' %}
+                        <a href="{{ url_for('event.web_get_events') }}">My Events</a>
+                        <a href="{{ url_for('event.web_create_event') }}">Create Event</a>
+                    {% else %}
+                        <a href="{{ url_for('event.web_get_events') }}">Events</a>
+                        <a href="{{ url_for('booking.web_my_bookings') }}">My Bookings</a>
+                    {% endif %}
+                    <a href="{{ url_for('auth.web_profile') }}">Profile</a>
+                    <a href="{{ url_for('auth.web_logout') }}">Logout</a>
+                </div>
+            </nav>
+        {% endif %}
+        <main class="container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}{% for category,message in messages %}<div class="flash">{{ message }}</div>{% endfor %}{% endif %}
+            {% endwith %}
+            {% block content %}{% endblock %}
+        </main>
+        <footer class="footer">TicketFlow • Secure Event Ticket Booking Platform</footer>
+    </body></html>

@@ -1,4 +1,6 @@
 from models.coupon import Coupon
+from datetime import datetime
+from decimal import Decimal, InvalidOperation
 
 class CouponService:
     def __init__(self, coupon_dao):
@@ -15,7 +17,59 @@ class CouponService:
 
         return coupon
 
+    @staticmethod
+    def _normalise_data(data):
+        """Convert HTML form strings to the types expected by coupon logic."""
+        data = dict(data)
+
+        for field in ("discount_value", "minimum_amount", "maximum_discount"):
+            if field in data:
+                value = data[field]
+                if value in (None, ""):
+                    data[field] = None
+                else:
+                    try:
+                        data[field] = Decimal(str(value))
+                    except (InvalidOperation, ValueError):
+                        raise ValueError(f"{field.replace('_', ' ').title()} must be a number")
+
+        if "usage_limit" in data:
+            value = data["usage_limit"]
+            if value in (None, ""):
+                data["usage_limit"] = None
+            else:
+                try:
+                    data["usage_limit"] = int(value)
+                except (TypeError, ValueError):
+                    raise ValueError("Usage limit must be a whole number")
+
+        for field in ("valid_from", "valid_until"):
+            if field in data:
+                value = data[field]
+                if value in (None, ""):
+                    # Blank optional fields from an edit form mean "leave unchanged".
+                    data.pop(field)
+                elif not isinstance(value, datetime):
+                    try:
+                        data[field] = datetime.fromisoformat(value)
+                    except (TypeError, ValueError):
+                        raise ValueError(f"{field.replace('_', ' ').title()} must be a valid date and time")
+
+        if "is_active" in data:
+            value = data["is_active"]
+            if isinstance(value, bool):
+                pass
+            elif isinstance(value, str) and value.lower() in {"true", "1", "yes", "on"}:
+                data["is_active"] = True
+            elif isinstance(value, str) and value.lower() in {"false", "0", "no", "off"}:
+                data["is_active"] = False
+            else:
+                raise ValueError("Active status must be true or false")
+
+        return data
+
     def create_coupon(self,data,admin_id):
+        data = self._normalise_data(data)
         code = data.get("code")
 
         if not code:
@@ -83,6 +137,18 @@ class CouponService:
             raise ValueError(f"Minimum purchase amount is {coupon.minimum_amount}")
 
         return coupon
+    
+    def validate_and_lock_coupon(self,code,amount):
+        code = code.strip().upper()
+        coupon = self.coupon_dao.get_and_lock_active_coupon(code)
+
+        if coupon is None:
+            raise ValueError("Invalid, expired, or fully used coupon")
+
+        if amount < coupon.minimum_amount:
+            raise ValueError(f"Minimum purchase amount is {coupon.minimum_amount}")
+
+        return coupon
 
     def calculate_discount(self,coupon,amount):
         if coupon.discount_type == "PERCENTAGE":
@@ -115,10 +181,11 @@ class CouponService:
         }
 
     def update_coupon(self,coupon_id,data):
+        data = self._normalise_data(data)
         coupon = self.get_coupon(coupon_id)
         
         if "discount_value" in data:
-            if data["discount_value"] <= 0:
+            if data["discount_value"] is None or data["discount_value"] <= 0:
                 raise ValueError("Discount must be greater than 0")
                 
             coupon.discount_value = data["discount_value"]
@@ -130,6 +197,8 @@ class CouponService:
             coupon.maximum_discount = data["maximum_discount"]
                 
         if "usage_limit" in data:
+            if data["usage_limit"] is None or data["usage_limit"] <= 0:
+                raise ValueError("Usage limit must be greater than 0")
             if data["usage_limit"] < coupon.used_count:
                 raise ValueError("Usage limit cannot be less than used count")
 

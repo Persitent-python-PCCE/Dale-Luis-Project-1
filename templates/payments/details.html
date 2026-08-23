@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card auth-card">
+    <h1>Payment Details</h1>
+    <p><b>Transaction:</b> {{ payment.transaction_id }}</p>
+    <p><b>Amount:</b> ₹{{ payment.amount }}</p>
+    <p><b>Method:</b> {{ payment.payment_method }}</p>
+    <p><b>Status:</b> <span class="badge status-success">{{ payment.status }}</span></p>
+    <a class="btn" href="{{ url_for('booking.web_booking_details', booking_id=payment.booking_id) }}">View Booking</a>
+</div>
+{% endblock %}

@@ -1,4 +1,5 @@
 from models.review import Review
+from models.booking import Booking
 
 
 class ReviewService:
@@ -11,6 +12,21 @@ class ReviewService:
 
     def get_user_reviews(self, user_id):
         return self.review_dao.get_by_user(user_id)
+
+    def add_review(self, user_id, event_id, data):
+        try:
+            rating = int(data.get("rating"))
+        except (TypeError, ValueError):
+            raise ValueError("Rating must be between 1 and 5")
+
+        comment = data.get("comment", data.get("review_text", "")).strip()
+        booking = Booking.query.filter_by(
+            user_id=user_id, event_id=event_id, status="CONFIRMED"
+        ).first()
+        if booking is None:
+            raise ValueError("You can only review an event you have attended")
+
+        return self.create_review(user_id, event_id, booking.id, rating, comment)
 
     def create_review(
         self, user_id, event_id, booking_id, rating, review_text):

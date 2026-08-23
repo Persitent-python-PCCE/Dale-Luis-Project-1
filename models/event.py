@@ -86,3 +86,29 @@ class Event(db.Model):
 
     def __repr__(self):
         return f"<Event {self.name}>"
+
+    def to_dict(self):
+        return {
+            "id": self.id, 
+            "name": self.name, 
+            "category_id": self.category_id,
+            "venue_id": self.venue_id, 
+            "description": self.description,
+            "poster_path": self.poster_path,
+            "start_date": self.start_date.isoformat() if self.start_date else None,
+            "end_date": self.end_date.isoformat() if self.end_date else None,
+            "start_time": self.start_time.isoformat() if self.start_time else None,
+            "end_time": self.end_time.isoformat() if self.end_time else None,
+            "maximum_capacity": self.maximum_capacity,
+            "vip_price": float(self.vip_price),
+            "premium_price": float(self.premium_price),
+            "regular_price": float(self.regular_price),
+            "status": self.status, 
+            "approval_status": self.approval_status,
+            "created_by": self.created_by, 
+            "approved_by": self.approved_by,
+            "approved_at": self.approved_at.isoformat() if self.approved_at else None,
+            "rejection_reason": self.rejection_reason,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }

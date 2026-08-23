@@ -26,6 +26,17 @@ class CouponDAO:
             Coupon.valid_until >= now,
             Coupon.used_count < Coupon.usage_limit
         ).first()
+    
+    def get_and_lock_active_coupon(self,code):
+        now = datetime.utcnow()
+
+        return Coupon.query.filter(
+            Coupon.code == code,
+            Coupon.is_active == True,
+            Coupon.valid_from <= now,
+            Coupon.valid_until >= now,
+            Coupon.used_count < Coupon.usage_limit
+            ).with_for_update().first()
 
     def save(self, coupon):
         db.session.add(coupon)

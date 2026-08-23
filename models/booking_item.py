@@ -43,3 +43,16 @@ class BookingItem(db.Model):
     
     def __repr__(self):
         return f"<BookingItem {self.seat_number}>"
+
+    def to_dict(self):
+        return {
+            "id": self.id, 
+            "booking_id": self.booking_id, 
+            "event_id": self.event_id,
+            "seat_id": self.seat_id, 
+            "seat_number": self.seat_number,
+            "seat_category": self.seat_category, 
+            "unit_price": float(self.unit_price),
+            "ticket_status": self.ticket_status,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }

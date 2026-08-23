@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card auth-card">
+    <h1>Mock Payment</h1>
+    <p>Booking: <b>{{ booking.booking_reference }}</b></p>
+    <p>Total Amount: <b>₹{{ booking.final_amount }}</b></p>
+    <form method="POST">
+        <div class="form-group">
+            <label>Payment Method</label>
+            <select name="payment_method">
+                <option value="MOCK">Mock Card</option>
+                <option value="MOCK_UPI">Mock UPI</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Card Number</label>
+            <input placeholder="4111 1111 1111 1111">
+        </div>
+        <button class="btn success">Pay ₹{{ booking.final_amount }}</button>
+    </form>
+    <p class="muted">Demo payment only. No real money is charged.</p>
+</div>
+{% endblock %}

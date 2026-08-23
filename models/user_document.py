@@ -47,3 +47,18 @@ class UserDocument(db.Model):
 
     def __repr__(self):
         return f"<UserDocument {self.file_name}>"
+
+    def to_dict(self):
+        return {
+            "id": self.id, 
+            "user_id": self.user_id,
+            "document_type": self.document_type, 
+            "file_name": self.file_name,
+            "file_type": self.file_type, 
+            "file_size": self.file_size,
+            "verification_status": self.verification_status,
+            "verified_by": self.verified_by,
+            "verified_at": self.verified_at.isoformat() if self.verified_at else None,
+            "rejection_reason": self.rejection_reason,
+            "uploaded_at": self.uploaded_at.isoformat() if self.uploaded_at else None,
+        }

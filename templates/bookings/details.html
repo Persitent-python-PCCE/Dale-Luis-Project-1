@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block content %}
+  <div class="card">
+    <h1>Booking Confirmation</h1>
+    <span class="badge status-success">{{ booking.status }}</span>
+    <div class="detail-grid">
+      <div>
+        <p><b>Reference:</b> {{ booking.booking_reference }}</p>
+        <p><b>Event:</b> {{ booking.event.name }}</p>
+        <p><b>Total:</b> ₹{{ booking.final_amount }}</p>
+        <h3>Your Seats</h3>
+        {% for item in booking.booking_items %}
+        <p><b>{{ item.seat_number }}</b> — {{ item.seat_category }} — ₹{{ item.unit_price }}</p>
+        {% else %}
+        <p class="muted">No seats found for this booking.</p>
+        {% endfor %}
+      </div>
+      <div style="text-align:center">
+        <h3>Booking QR Ticket</h3>
+        <img src="{{ url_for('booking.web_booking_qr', booking_id=booking.id) }}" alt="QR code for booking {{ booking.booking_reference }}" width="200" height="200">
+        <p class="muted">Scan to view this booking's event, seats, total, and status.</p>
+      </div>
+    </div>
+  </div>
+{% endblock %}

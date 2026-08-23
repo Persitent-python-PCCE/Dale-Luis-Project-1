@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <div class="detail-grid">
+        <div>
+            <img style="width:100%;max-height:380px;object-fit:cover;border-radius:14px" src="{{ url_for('static', filename=event.poster_path) if event.poster_path else 'https://placehold.co/800x500?text=Event' }}" alt="{{ event.name }} poster">
+            <h1>{{ event.name }}</h1>
+            <span class="badge">{{ event.category }}</span>
+            <p>{{ event.description }}</p>
+        </div>
+        <div>
+            <h2>Event Information</h2>
+            <p><b>Date:</b> {{ event.start_date }} - {{ event.end_date }}</p>
+            <p><b>Time:</b> {{ event.start_time }} - {{ event.end_time }}</p>
+            <p><b>Venue:</b> {{ event.venue.name if event.venue else '-' }}</p>
+            <p><b>VIP:</b> ₹{{ event.vip_price }}</p>
+            <p><b>Premium:</b> ₹{{ event.premium_price }}</p>
+            <p><b>Regular:</b> ₹{{ event.regular_price }}</p>
+            <a class="btn" href="{{ url_for('booking.web_create_booking', event_id=event.id) }}">Select Seats</a>
+        </div>
+    </div>
+</div>
+<div class="card" style="margin-top:20px">
+    <h2>Reviews</h2>
+    {% for review in reviews|default([]) %}
+    <p><b>{{ review.user.name }}</b> <span class="rating">★ {{ review.rating }}/5</span><br>{{ review.comment }}</p>
+    {% else %}
+    <p class="muted">No reviews yet.</p>
+    {% endfor %}
+</div>
+{% endblock %}

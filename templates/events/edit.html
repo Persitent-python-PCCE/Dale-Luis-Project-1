@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h1>Edit {{ event.name }}</h1>
+    <form method="POST" enctype="multipart/form-data">
+        <div class="grid">
+            {% for field,label in [('name','Event name'),('start_date','Start date'),('end_date','End date'),('start_time','Start time'),('end_time','End time'),('vip_price','VIP price'),('premium_price','Premium price'),('regular_price','Regular price')] %}
+            <div class="form-group">
+                <label>{{ label }}</label>
+                <input name="{{ field }}" value="{{ event[field] if event is mapping else event|attr(field) }}">
+            </div>{% endfor %}
+        </div>
+        <div class="form-group">
+            <label>Description</label>
+            <textarea name="description">{{ event.description }}</textarea>
+        </div><button class="btn">Save Changes</button>
+    </form>
+</div>
+{% endblock %}

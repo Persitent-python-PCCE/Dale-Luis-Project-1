@@ -21,3 +21,14 @@ class EventCategory(db.Model):
 
     def __repr__(self):
         return f"<EventCategory {self.name}>"
+
+    def __str__(self):
+        return self.name
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "is_active": self.is_active,
+        }

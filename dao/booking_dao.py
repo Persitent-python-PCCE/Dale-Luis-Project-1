@@ -10,6 +10,9 @@ class BookingDAO:
     def get_by_id(self, booking_id):
         return Booking.query.get(booking_id)
 
+    def get_and_lock_by_id(self, booking_id):
+        return Booking.query.filter_by(id=booking_id).with_for_update().first()
+
     def get_by_reference(self, reference):
         return Booking.query.filter_by(
             booking_reference=reference
