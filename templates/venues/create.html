@@ -1,31 +1,48 @@
 {% extends 'base.html' %}
+{% block title %}Add Venue - TicketFlow{% endblock %}
+
 {% block content %}
-<div class="card">
-    <h1>Add Venue</h1>
+<div class="card" style="max-width: 800px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 1px solid #e2e8f0; padding-bottom: 16px;">
+        <div>
+            <h1 style="margin: 0; font-size: 1.75rem; font-weight: 800;">Add New Venue</h1>
+            <p class="muted" style="margin: 4px 0 0 0;">Register a new venue for hosting events</p>
+        </div>
+        <a class="btn secondary" href="{{ url_for('venue.web_get_venues') }}">← Back to Venues</a>
+    </div>
+
     <form method="POST">
-        <div class="grid">
-            <div class="form-group">
-                <label>Name</label>
-                <input name="name">
+        <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px;">
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label>Venue Name *</label>
+                <input type="text" name="name" required placeholder="e.g. Royal Arena & Convention Center">
             </div>
+
             <div class="form-group">
-                <label>Location</label>
-                <input name="location">
+                <label>City / Location *</label>
+                <input type="text" name="location" required placeholder="e.g. Mumbai, Maharashtra">
             </div>
+
             <div class="form-group">
-                <label>Maximum Capacity</label>
-                <input type="number" name="maximum_capacity">
+                <label>Maximum Seating Capacity *</label>
+                <input type="number" name="maximum_capacity" min="1" required placeholder="e.g. 500">
+            </div>
+
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label>Full Address *</label>
+                <textarea name="address" required placeholder="Street address, city, state, zip code..." style="min-height: 80px;"></textarea>
+            </div>
+
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label>Venue Description</label>
+                <textarea name="description" placeholder="Describe venue amenities, parking info, acoustic setup..."></textarea>
             </div>
         </div>
-        <div class="form-group">
-            <label>Address</label>
-            <textarea name="address"></textarea>
+
+        <div style="display: flex; gap: 16px; justify-content: flex-end; margin-top: 24px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
+            <a class="btn secondary" href="{{ url_for('venue.web_get_venues') }}">Cancel</a>
+            <button class="btn" type="submit" style="padding: 12px 32px; font-size: 1rem;">🏛 Create Venue</button>
         </div>
-        <div class="form-group">
-            <label>Description</label>
-            <textarea name="description"></textarea>
-        </div>
-        <button class="btn">Create Venue</button>
     </form>
 </div>
 {% endblock %}

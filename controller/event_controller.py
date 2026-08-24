@@ -12,28 +12,13 @@ from dao.event_category_dao import EventCategoryDAO
 from dao.venue_dao import VenueDAO
 from utils.decorators import role_required
 from utils.rate_limit import limiter
+from utils.file_upload import save_poster
 
 event_bp = Blueprint("event", __name__)
 
 event_service = EventService(EventDAO(), EventCategoryDAO(), VenueDAO())
-ALLOWED_POSTER_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "gif"}
 
-def save_poster(file):
-    if not file or not file.filename:
-        return None
-
-    extension = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
-    if extension not in ALLOWED_POSTER_EXTENSIONS:
-        raise ValueError("Poster must be a PNG, JPG, JPEG, WEBP, or GIF image")
-
-    filename = f"{uuid.uuid4().hex}_{secure_filename(file.filename)}"
-    relative_path = os.path.join("uploads", "posters", filename).replace("\\", "/")
-    upload_dir = os.path.join("static", "uploads", "posters")
-    os.makedirs(upload_dir, exist_ok=True)
-    file.save(os.path.join(upload_dir, filename))
-    return relative_path
-
-@event_bp.route("/v1/events", methods=["GET"])
+@event_bp.route("/api/events", methods=["GET"])
 def get_events():
     events= event_service.get_all_events()
     
@@ -41,7 +26,7 @@ def get_events():
         "events" : [e.to_dict() for e in events]
     }), 200
 
-@event_bp.route("/v2/events/<int:event_id>", methods=["GET"])
+@event_bp.route("/api/events/<int:event_id>", methods=["GET"])
 def get_event(event_id):
     try:
         event = event_service.get_event(event_id)
@@ -52,7 +37,7 @@ def get_event(event_id):
             "message" : str(e)
         }), 404
         
-@event_bp.route("/v1/events", methods=["POST"])
+@event_bp.route("/api/events", methods=["POST"])
 @role_required("ADMIN","EVENT_MANAGER")
 @limiter.limit("10 per hour")
 def create_event():
@@ -72,13 +57,14 @@ def create_event():
             "message" : str(e)
         }), 400
         
-@event_bp.route("/v1/events/<int:event_id>", methods=["PUT"])
+@event_bp.route("/api/events/<int:event_id>", methods=["PUT"])
 @role_required("ADMIN","EVENT_MANAGER")
 def update_event(event_id):
     data = request.get_json()
     
     try:
-        event = event_service.update_event(event_id, data, int(get_jwt_identity()))
+        is_admin = get_jwt().get("role") == "ADMIN"
+        event = event_service.update_event(event_id, data, int(get_jwt_identity()), is_admin=is_admin)
         
         return jsonify({
             "message" : "Event updated Successfully",
@@ -90,7 +76,7 @@ def update_event(event_id):
             "message" : str(e)
         }), 400
         
-@event_bp.route("/v1/events/<int:event_id>",methods=["DELETE"])
+@event_bp.route("/api/events/<int:event_id>",methods=["DELETE"])
 @role_required("EVENT_MANAGER", "ADMIN")
 def delete_event(event_id):
     try:
@@ -104,7 +90,7 @@ def delete_event(event_id):
             "message" : str(e)
         }), 400
         
-@event_bp.route("/v1/events/<int:event_id>/approve",methods=["PUT"])
+@event_bp.route("/api/events/<int:event_id>/approve",methods=["PUT"])
 @role_required("ADMIN")
 def approve_event(event_id):
     
@@ -199,6 +185,7 @@ def web_get_event(event_id):
 def web_create_event():
     if request.method == "POST":
         data = request.form.to_dict()
+        data["is_18_plus"] = "is_18_plus" in request.form
         user_id = int(get_jwt_identity())
 
         try:
@@ -235,9 +222,17 @@ def web_update_event(event_id):
 
     if request.method == "POST":
         data = request.form.to_dict()
+        data["is_18_plus"] = "is_18_plus" in request.form
+
+        poster_file = request.files.get("poster")
+        if poster_file and poster_file.filename:
+            poster_path = save_poster(poster_file)
+            if poster_path:
+                data["poster_path"] = poster_path
 
         try:
-            event_service.update_event(event_id, data, int(get_jwt_identity()))
+            is_admin = get_jwt().get("role") == "ADMIN"
+            event_service.update_event(event_id, data, int(get_jwt_identity()), is_admin=is_admin)
 
             flash("Event updated successfully","success")
 

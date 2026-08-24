@@ -1,23 +1,306 @@
 {% extends 'base.html' %}
-{% block title %}Select Seats{% endblock %}
+{% block title %}Select Seats - {{ event.name }}{% endblock %}
+
 {% block content %}
+<style>
+  .seat-picker-container {
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  .stage-banner {
+    text-align: center;
+    background: linear-gradient(130deg, #3b82f6, #6366f1);
+    color: white;
+    font-weight: 700;
+    letter-spacing: 2px;
+    padding: 8px;
+    border-radius: 8px 8px 30px 30px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+    text-transform: uppercase;
+    font-size: 0.85rem;
+  }
+
+  .legend-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 12px 18px;
+    border-radius: 10px;
+    margin-bottom: 24px;
+    font-size: 0.85rem;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+  }
+
+  .seat-box {
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s ease-in-out;
+    position: relative;
+    border: 1.5px solid transparent;
+  }
+
+  .seat-box:hover:not(.booked) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+  }
+
+  .seat-box input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+  }
+
+  .seat-box.cat-vip {
+    background-color: #fef3c7;
+    color: #92400e;
+    border-color: #f59e0b;
+  }
+
+  .seat-box.cat-premium {
+    background-color: #f3e8ff;
+    color: #6b21a8;
+    border-color: #a855f7;
+  }
+
+  .seat-box.cat-regular {
+    background-color: #eff6ff;
+    color: #1e40af;
+    border-color: #3b82f6;
+  }
+
+  .seat-box.selected {
+    background-color: #22c55e !important;
+    color: #ffffff !important;
+    border-color: #15803d !important;
+    box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+  }
+
+  .seat-box.booked {
+    background-color: #e2e8f0 !important;
+    color: #94a3b8 !important;
+    border-color: #cbd5e1 !important;
+    cursor: not-allowed !important;
+    text-decoration: line-through;
+  }
+
+  .row-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .row-label {
+    width: 50px;
+    font-weight: 700;
+    color: #64748b;
+    font-size: 0.85rem;
+    text-align: right;
+  }
+
+  .row-seats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    flex: 1;
+  }
+
+  .booking-summary-card {
+    position: sticky;
+    bottom: 20px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    padding: 16px 24px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 24px;
+  }
+</style>
+
+<div class="seat-picker-container">
+  <div class="card" style="margin-bottom: 16px;">
+    <h1 style="margin-bottom: 4px;">Select Seats: {{ event.name }}</h1>
+    <p class="muted" style="margin: 0;">
+      Capacity: <strong>{{ event.maximum_capacity }} seats</strong> &bull; {{ event.venue.name if event.venue else
+      'Venue' }}
+    </p>
+  </div>
+
   <div class="card">
-    <h1>Select seats for {{ event.name }}</h1>
-    <p class="muted">Choose one or more available seats, then continue to payment.</p>
-    <form method="POST" action="{{ url_for('booking.web_create_booking') }}">
+    <!-- Category & Status Legend -->
+    <div class="legend-bar">
+      <div class="legend-item">
+        <span class="seat-box cat-vip" style="width:24px; height:24px; pointer-events:none;"></span>
+        <span>VIP (${{ "%.2f"|format(event.vip_price) }})</span>
+      </div>
+      <div class="legend-item">
+        <span class="seat-box cat-premium" style="width:24px; height:24px; pointer-events:none;"></span>
+        <span>PREMIUM (${{ "%.2f"|format(event.premium_price) }})</span>
+      </div>
+      <div class="legend-item">
+        <span class="seat-box cat-regular" style="width:24px; height:24px; pointer-events:none;"></span>
+        <span>REGULAR (${{ "%.2f"|format(event.regular_price) }})</span>
+      </div>
+      <div class="legend-item">
+        <span class="seat-box selected" style="width:24px; height:24px; pointer-events:none;"></span>
+        <span>Selected</span>
+      </div>
+      <div class="legend-item">
+        <span class="seat-box booked" style="width:24px; height:24px; pointer-events:none;"></span>
+        <span>Unavailable / Booked</span>
+      </div>
+    </div>
+
+    <!-- Stage Banner -->
+    <div class="stage-banner">STAGE / SCREEN</div>
+
+    <!-- Interactive Seats Form -->
+    <form id="seatForm" method="POST" action="{{ url_for('booking.web_create_booking') }}" enctype="multipart/form-data">
       <input type="hidden" name="event_id" value="{{ event.id }}">
-      <div class="grid">
-        {% for seat in seats %}
-          <label class="card" style="cursor:pointer">
-            <input type="checkbox" name="seat_ids" value="{{ seat.id }}">
-            <b>{{ seat.seat_number }}</b><br>
-            <span class="muted">{{ seat.category }} · Row {{ seat.row_name }}</span>
-          </label>
+
+      {% if event.is_18_plus %}
+      <div style="background: #fffbebf5; border: 1.5px solid #f59e0b; border-radius: 10px; padding: 16px; margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: #92400e; font-size: 1rem; margin-bottom: 8px;">
+          <span style="background: #ef4444; color: white; border-radius: 4px; padding: 2px 6px; font-size: 0.75rem;">18+</span>
+          Age Verification Required
+        </div>
+        <p style="margin: 0 0 12px 0; font-size: 0.85rem; color: #78350f;">
+          This event is age-restricted (18+). You must provide valid identification (Government ID, Driver's License, or Passport).
+        </p>
+        
+        {% if user_doc %}
+          <div style="font-size: 0.85rem; color: #1e293b; background: #ffffff; padding: 10px 14px; border-radius: 6px; border: 1px solid #cbd5e1; margin-bottom: 10px;">
+            ✓ Uploaded ID: <strong>{{ user_doc.file_name }}</strong> (Status: <strong>{{ user_doc.verification_status }}</strong>)
+          </div>
+        {% endif %}
+
+        <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 200px;">
+            <label style="font-size: 0.85rem; font-weight: 600; display: block; margin-bottom: 4px;">Document Type</label>
+            <select name="document_type" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1;">
+              <option value="NATIONAL_ID">National ID Card</option>
+              <option value="DRIVERS_LICENSE">Driver's License</option>
+              <option value="PASSPORT">Passport</option>
+            </select>
+          </div>
+          <div style="flex: 2; min-width: 250px;">
+            <label style="font-size: 0.85rem; font-weight: 600; display: block; margin-bottom: 4px;">
+              {% if user_doc %}Upload New / Replace Document{% else %}Upload Identification Document (PDF/Image) *{% endif %}
+            </label>
+            <input type="file" name="id_document" accept="application/pdf,image/png,image/jpeg,image/webp" {% if not user_doc %}required{% endif %} style="width: 100%; padding: 6px; border-radius: 6px; border: 1px solid #cbd5e1; background: white;">
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="rows-container">
+        {% for row_name, row_seats in rows_dict.items() %}
+        <div class="row-wrapper">
+          <div class="row-label">Row {{ row_name }}</div>
+          <div class="row-seats">
+            {% for seat in row_seats %}
+            {% set cat_class = 'cat-vip' if seat.category == 'VIP' else ('cat-premium' if seat.category == 'PREMIUM'
+            else 'cat-regular') %}
+            {% set is_disabled = seat.is_booked %}
+
+            <label class="seat-box {{ cat_class }} {% if is_disabled %}booked{% endif %}"
+              title="Seat {{ seat.seat_number }} ({{ seat.category }}) - ${{ '%.2f'|format(seat.computed_price) }}">
+              {% if not is_disabled %}
+              <input type="checkbox" name="seat_ids" value="{{ seat.id }}" data-number="{{ seat.seat_number }}"
+                data-price="{{ seat.computed_price }}" onchange="toggleSeat(this)">
+              {% endif %}
+              {{ seat.seat_number }}
+            </label>
+            {% endfor %}
+          </div>
+        </div>
         {% else %}
-          <p>No seats are currently available for this event.</p>
+        <p class="muted" style="text-align: center;">No seats available.</p>
         {% endfor %}
       </div>
-      {% if seats %}<button class="btn" type="submit">Continue to Payment</button>{% endif %}
+
+      <!-- Sticky Summary Footer Bar -->
+      <div class="booking-summary-card">
+        <div>
+          <div style="font-size: 0.85rem; color: #64748b;">Selected Seats:</div>
+          <div id="selectedSeatsList" style="font-weight: 700; color: #1e293b; font-size: 1rem;">None</div>
+        </div>
+        <div style="text-align: right; display: flex; align-items: center; gap: 20px;">
+          <div>
+            <div style="font-size: 0.85rem; color: #64748b;">Total Price:</div>
+            <div id="totalPrice" style="font-weight: 800; color: #2563eb; font-size: 1.25rem;">Rs.0.00</div>
+          </div>
+          <button id="submitBtn" class="btn" type="submit" disabled style="padding: 10px 24px;">
+            Continue to Payment
+          </button>
+        </div>
+      </div>
     </form>
   </div>
+</div>
+
+<script>
+  function toggleSeat(input) {
+    const label = input.parentElement;
+    if (input.checked) {
+      label.classList.add('selected');
+    } else {
+      label.classList.remove('selected');
+    }
+    updateSummary();
+  }
+
+  function updateSummary() {
+    const checkboxes = document.querySelectorAll('input[name="seat_ids"]:checked');
+    const selectedListEl = document.getElementById('selectedSeatsList');
+    const totalPriceEl = document.getElementById('totalPrice');
+    const submitBtn = document.getElementById('submitBtn');
+
+    if (checkboxes.length === 0) {
+      selectedListEl.textContent = 'None';
+      totalPriceEl.textContent = 'Rs.0.00';
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Continue to Payment';
+      return;
+    }
+
+    let seatNumbers = [];
+    let total = 0;
+
+    checkboxes.forEach(cb => {
+      seatNumbers.push(cb.getAttribute('data-number'));
+      total += parseFloat(cb.getAttribute('data-price') || 0);
+    });
+
+    selectedListEl.textContent = seatNumbers.join(', ') + ` (${checkboxes.length} seat${checkboxes.length > 1 ? 's' : ''})`;
+    totalPriceEl.textContent = 'Rs.' + total.toFixed(2);
+    submitBtn.disabled = false;
+    submitBtn.textContent = `Continue to Payment (Rs.${total.toFixed(2)})`;
+  }
+</script>
 {% endblock %}

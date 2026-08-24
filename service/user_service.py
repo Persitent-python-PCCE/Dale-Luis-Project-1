@@ -1,5 +1,6 @@
 from models.user import User
 import bcrypt
+from utils.validators import validate_email, validate_phone
 
 class UserService:
     def __init__(self, user_dao):
@@ -17,6 +18,9 @@ class UserService:
         
         if not name or not email or not password:
             raise ValueError("Name, email, password are required")
+        
+        email = validate_email(email)
+        phone = validate_phone(phone)
         
         allowed_roles = ["CUSTOMER", "EVENT_MANAGER"]
         
@@ -117,3 +121,31 @@ class UserService:
         user = self.get_user(id)
         
         self.user_dao.delete(user)
+
+    def update_user_profile(self, id, data):
+        user = self.get_user(id)
+
+        if "name" in data and data["name"]:
+            user.name = data["name"].strip()
+
+        if "phone" in data:
+            user.phone = validate_phone(data["phone"])
+
+        if "email" in data and data["email"]:
+            new_email = validate_email(data["email"])
+            if new_email != user.email:
+                existing = self.user_dao.get_by_email(new_email)
+                if existing and existing.id != user.id:
+                    raise ValueError("Email is already in use by another account")
+                user.email = new_email
+
+        if "password" in data and data["password"]:
+            pass_bytes = data["password"].encode("utf-8")
+            sal = bcrypt.gensalt()
+            pass_hash = bcrypt.hashpw(pass_bytes, sal).decode("utf-8")
+            user.pass_hash = pass_hash
+
+        return self.user_dao.update(user)
+
+    def update_user(self, id, data):
+        return self.update_user_profile(id, data)

@@ -61,6 +61,7 @@ class Booking(db.Model):
         return f"<Booking {self.booking_reference}>"
 
     def to_dict(self):
+        items = [item.to_dict() for item in self.booking_items] if self.booking_items else []
         return {
             "id": self.id, 
             "booking_reference": self.booking_reference,
@@ -74,4 +75,6 @@ class Booking(db.Model):
             "booking_date": self.booking_date.isoformat() if self.booking_date else None,
             "cancelled_at": self.cancelled_at.isoformat() if self.cancelled_at else None,
             "cancellation_reason": self.cancellation_reason,
+            "items": items,
+            "booking_items": items,
         }

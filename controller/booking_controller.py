@@ -7,14 +7,18 @@ from dao.booking_dao import BookingDAO
 from dao.booking_item_dao import BookingItemDAO
 from dao.event_dao import EventDAO
 from dao.seat_dao import SeatDAO
+from models.notification import Notification
+from models.user_document import UserDocument
+from config.database import db
 from utils.decorators import role_required
 from utils.rate_limit import limiter
+from utils.file_upload import save_user_document
 
 booking_bp = Blueprint("booking", __name__)
 
 booking_service = BookingService(BookingDAO(), BookingItemDAO(), EventDAO(), SeatDAO())
 
-@booking_bp.route("/v1/bookings",methods=["POST"])
+@booking_bp.route("/api/bookings",methods=["POST"])
 @role_required("CUSTOMER")
 @limiter.limit("10 per minute")
 def create_booking():
@@ -40,7 +44,7 @@ def create_booking():
             "message": str(e)
         }), 400
         
-@booking_bp.route("/v1/bookings/my",methods=["GET"])
+@booking_bp.route("/api/bookings/my",methods=["GET"])
 @role_required("CUSTOMER")
 def my_bookings():
     user_id = int(get_jwt_identity())
@@ -51,12 +55,19 @@ def my_bookings():
         "bookings": [b.to_dict()for b in bookings]
     }), 200
     
-@booking_bp.route("/v1/bookings/<int:booking_id>",methods=["GET"])
+@booking_bp.route("/api/bookings/<int:booking_id>",methods=["GET"])
 @role_required("CUSTOMER", "ADMIN")
 def get_booking(booking_id):
     try:
 
         booking = booking_service.get_booking(booking_id)
+
+        user_id = int(get_jwt_identity())
+        claims = get_jwt()
+        if claims.get("role") == "CUSTOMER" and booking.user_id != user_id:
+            return jsonify({
+                "message": "You cannot access this booking"
+            }), 403
 
         return jsonify(
             booking.to_dict()
@@ -92,8 +103,15 @@ def web_my_bookings():
     user_id = int(get_jwt_identity())
 
     bookings = booking_service.get_user_bookings(user_id)
+    notifications = Notification.query.filter_by(user_id=user_id).order_by(
+        Notification.created_at.desc()
+    ).all()
 
-    return render_template("bookings/list.html",bookings=bookings)
+    return render_template(
+        "bookings/list.html",
+        bookings=bookings,
+        notifications=notifications,
+    )
 
 @booking_bp.route("/bookings/<int:booking_id>",methods=["GET"])
 @role_required("CUSTOMER", "ADMIN")
@@ -165,6 +183,8 @@ def web_booking_qr(booking_id):
 @role_required("CUSTOMER")
 @limiter.limit("10 per minute")
 def web_create_booking():
+    user_id = int(get_jwt_identity())
+
     if request.method == "GET":
         event_id = request.args.get("event_id", type=int)
         event = booking_service.event_dao.get_by_id(event_id)
@@ -173,18 +193,68 @@ def web_create_booking():
             flash("Event not found", "danger")
             return redirect(url_for("event.web_get_events"))
 
-        seats = [
-            seat for seat in booking_service.seat_dao.get_by_venue(event.venue_id)
-            if not booking_service.booking_item_dao.is_seat_booked(event.id, seat.id)
-        ]
-        return render_template("bookings/create.html", event=event, seats=seats)
+        all_venue_seats = booking_service.seat_dao.ensure_venue_seats(
+            event.venue_id, event.maximum_capacity
+        )
+        event_seats = all_venue_seats[:event.maximum_capacity]
 
-    user_id = int(get_jwt_identity())
+        for seat in event_seats:
+            try:
+                seat.computed_price = booking_service.get_seat_price(event, seat.category)
+            except ValueError:
+                seat.computed_price = float(seat.base_price)
+            seat.is_booked = booking_service.booking_item_dao.is_seat_booked(event.id, seat.id)
+
+        from collections import defaultdict
+        rows_dict = defaultdict(list)
+        for seat in event_seats:
+            rows_dict[seat.row_name].append(seat)
+
+        user_doc = UserDocument.query.filter_by(user_id=user_id).first()
+
+        return render_template(
+            "bookings/create.html",
+            event=event,
+            seats=event_seats,
+            rows_dict=dict(rows_dict),
+            user_doc=user_doc,
+        )
 
     event_id = request.form.get("event_id",type=int)
     seat_ids = request.form.getlist("seat_ids")
 
     try:
+        event = booking_service.event_dao.get_by_id(event_id)
+        if event and event.is_18_plus:
+            doc_file = request.files.get("id_document")
+            user_doc = UserDocument.query.filter_by(user_id=user_id).first()
+
+            if doc_file and doc_file.filename:
+                doc_info = save_user_document(doc_file)
+                doc_type = request.form.get("document_type", "NATIONAL_ID")
+
+                if user_doc:
+                    user_doc.file_path = doc_info["file_path"]
+                    user_doc.file_name = doc_info["file_name"]
+                    user_doc.file_type = doc_info["file_type"]
+                    user_doc.file_size = doc_info["file_size"]
+                    user_doc.document_type = doc_type
+                    user_doc.verification_status = "PENDING"
+                else:
+                    user_doc = UserDocument(
+                        user_id=user_id,
+                        document_type=doc_type,
+                        file_path=doc_info["file_path"],
+                        file_name=doc_info["file_name"],
+                        file_type=doc_info["file_type"],
+                        file_size=doc_info["file_size"],
+                        verification_status="PENDING",
+                    )
+                    db.session.add(user_doc)
+                db.session.commit()
+            elif not user_doc:
+                raise ValueError("This event is 18+ restricted. Please upload an identification document (ID/Passport).")
+
         seat_ids = [int(seat_id)for seat_id in seat_ids]
 
         booking = booking_service.create_booking(user_id,event_id,seat_ids)
@@ -197,7 +267,7 @@ def web_create_booking():
     except ValueError as e:
         flash(str(e),"danger")
 
-        return redirect(url_for("event.web_get_event",event_id=event_id))
+        return redirect(url_for("booking.web_create_booking", event_id=event_id))
 
 @booking_bp.route("/bookings/<int:booking_id>/cancel",methods=["POST"])
 @role_required("CUSTOMER")

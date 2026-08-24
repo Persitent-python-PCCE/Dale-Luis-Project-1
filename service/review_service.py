@@ -19,10 +19,19 @@ class ReviewService:
         except (TypeError, ValueError):
             raise ValueError("Rating must be between 1 and 5")
 
-        comment = data.get("comment", data.get("review_text", "")).strip()
-        booking = Booking.query.filter_by(
-            user_id=user_id, event_id=event_id, status="CONFIRMED"
-        ).first()
+        raw_comment = data.get("comment") if data.get("comment") is not None else data.get("review_text", "")
+        comment = (str(raw_comment) if raw_comment is not None else "").strip()
+
+        booking_id = data.get("booking_id")
+        if booking_id:
+            booking = Booking.query.filter_by(
+                id=booking_id, user_id=user_id, event_id=event_id, status="CONFIRMED"
+            ).first()
+        else:
+            booking = Booking.query.filter_by(
+                user_id=user_id, event_id=event_id, status="CONFIRMED"
+            ).first()
+
         if booking is None:
             raise ValueError("You can only review an event you have attended")
 

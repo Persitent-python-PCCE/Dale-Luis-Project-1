@@ -1,33 +1,62 @@
 {% extends 'base.html' %}
+{% block title %}Explore Events - TicketFlow{% endblock %}
+
 {% block content %}
 <section class="hero">
-    <h1>Find your next experience</h1>
-    <p>Concerts, movies, sports, theatre and more.</p>
+    <h1>Find Your Next Experience</h1>
+    <p>Discover top concerts, movies, sports, workshops, theatre, and exclusive live events.</p>
 </section>
+
 <form class="searchbar" method="GET">
-    <input name="search" placeholder="Search event name..." value="{{ request.args.get('search','') }}">
+    <input name="search" placeholder="Search events by name or location..." value="{{ request.args.get('search','') }}">
     <select name="category">
         <option value="">All Categories</option>
         {% for c in categories|default([]) %}
-        <option>{{ c }}</option>{% endfor %}
+            {% set cat_name = c.name if c.name is defined else c %}
+            <option value="{{ cat_name }}" {% if selected_category == cat_name %}selected{% endif %}>
+                {{ cat_name }}
+            </option>
+        {% endfor %}
     </select>
-    <input type="date" name="date">
-    <button class="btn">Search</button>
+    <input type="date" name="date" value="{{ selected_date|default('') }}">
+    <button class="btn" type="submit">🔍 Search Events</button>
 </form>
+
 <div class="grid">
     {% for event in events %}
     <article class="card event-card">
-        <img src="{{ url_for('static', filename=event.poster_path) if event.poster_path else 'https://placehold.co/600x400?text=Event' }}" alt="{{ event.name }} poster">
+        <div class="event-poster-container">
+            <span class="badge-category">{{ event.category.name if event.category.name is defined else event.category }}</span>
+            {% if event.is_18_plus %}
+                <span class="badge-18-plus">18+</span>
+            {% endif %}
+            {% if event.poster_path %}
+                <img src="{{ url_for('static', filename=event.poster_path) }}" alt="{{ event.name }} poster">
+            {% else %}
+                <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg, #4f46e5, #9333ea); color:white; font-size:2rem; font-weight:800;">
+                    🎟
+                </div>
+            {% endif %}
+        </div>
         <div class="event-content">
-            <span class="badge">{{ event.category }}</span>
             <h2>{{ event.name }}</h2>
-            <p class="muted">{{ event.start_date }} • {{ event.venue.name if event.venue else 'Venue TBA' }}</p>
-            <p>From ₹{{ event.regular_price }}</p>
-            <a class="btn" href="{{ url_for('event.web_event_details', event_id=event.id) }}">View Event</a>
+            <div class="event-meta">
+                <span>📅 {{ event.start_date }} &bull; {{ event.start_time }}</span>
+                <span>📍 {{ event.venue.name if event.venue else 'Venue TBA' }}</span>
+            </div>
+            <div class="event-price">
+                Starting at ₹{{ "%.2f"|format(event.regular_price) }}
+            </div>
+            <a class="btn" href="{{ url_for('event.web_get_event', event_id=event.id) }}">
+                View Event & Book
+            </a>
         </div>
     </article>
     {% else %}
-    <p>No events found.</p>
+    <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+        <h3>No events found</h3>
+        <p class="muted">Try adjusting your search query or filter settings.</p>
+    </div>
     {% endfor %}
 </div>
 {% endblock %}

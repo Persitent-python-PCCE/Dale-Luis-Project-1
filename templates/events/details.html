@@ -1,31 +1,99 @@
 {% extends 'base.html' %}
+{% block title %}{{ event.name }} - TicketFlow{% endblock %}
+
 {% block content %}
 <div class="card">
     <div class="detail-grid">
         <div>
-            <img style="width:100%;max-height:380px;object-fit:cover;border-radius:14px" src="{{ url_for('static', filename=event.poster_path) if event.poster_path else 'https://placehold.co/800x500?text=Event' }}" alt="{{ event.name }} poster">
-            <h1>{{ event.name }}</h1>
-            <span class="badge">{{ event.category }}</span>
-            <p>{{ event.description }}</p>
+            {% if event.poster_path %}
+                <img style="width:100%; max-height:400px; object-fit:cover; border-radius:14px; box-shadow: var(--shadow-md);" src="{{ url_for('static', filename=event.poster_path) }}" alt="{{ event.name }} poster">
+            {% else %}
+                <div style="width:100%; height:300px; border-radius:14px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg, #4f46e5, #9333ea); color:white; font-size:3rem; font-weight:800;">
+                    🎟
+                </div>
+            {% endif %}
+            
+            <div style="margin-top: 20px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                <span class="badge">{{ event.category.name if event.category.name is defined else event.category }}</span>
+                {% if event.is_18_plus %}
+                    <span class="badge" style="background:#fee2e2; color:#b91c1c; font-weight:800; border: 1px solid #fca5a5;">🔞 18+ Restricted Event</span>
+                {% endif %}
+            </div>
+            
+            <h1 style="margin-top: 12px; margin-bottom: 12px; font-size: 2rem; font-weight: 800;">{{ event.name }}</h1>
+            <p style="color: #334155; line-height: 1.6; white-space: pre-line;">{{ event.description }}</p>
         </div>
-        <div>
-            <h2>Event Information</h2>
-            <p><b>Date:</b> {{ event.start_date }} - {{ event.end_date }}</p>
-            <p><b>Time:</b> {{ event.start_time }} - {{ event.end_time }}</p>
-            <p><b>Venue:</b> {{ event.venue.name if event.venue else '-' }}</p>
-            <p><b>VIP:</b> ₹{{ event.vip_price }}</p>
-            <p><b>Premium:</b> ₹{{ event.premium_price }}</p>
-            <p><b>Regular:</b> ₹{{ event.regular_price }}</p>
-            <a class="btn" href="{{ url_for('booking.web_create_booking', event_id=event.id) }}">Select Seats</a>
+
+        <div style="background: #f8fafc; padding: 24px; border-radius: 14px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+                <h2 style="font-size: 1.3rem; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">Event Information</h2>
+                
+                <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; font-size: 0.95rem;">
+                    <div>📅 <strong>Date:</strong> {{ event.start_date }} {% if event.end_date != event.start_date %} to {{ event.end_date }}{% endif %}</div>
+                    <div>⏰ <strong>Time:</strong> {{ event.start_time }} - {{ event.end_time }}</div>
+                    <div>📍 <strong>Venue:</strong> {{ event.venue.name if event.venue else 'Venue TBA' }} (Capacity: {{ event.maximum_capacity }})</div>
+                </div>
+
+                <h3 style="font-size: 1rem; margin-bottom: 12px; color: #475569;">Ticket Pricing</h3>
+                <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;">
+                    <div style="display: flex; justify-content: space-between; background: #fef3c7; border: 1px solid #f59e0b; padding: 10px 14px; border-radius: 8px; font-weight: 700; color: #92400e;">
+                        <span>VIP Ticket</span>
+                        <span>₹{{ "%.2f"|format(event.vip_price) }}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; background: #f3e8ff; border: 1px solid #a855f7; padding: 10px 14px; border-radius: 8px; font-weight: 700; color: #6b21a8;">
+                        <span>PREMIUM Ticket</span>
+                        <span>₹{{ "%.2f"|format(event.premium_price) }}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; background: #eff6ff; border: 1px solid #3b82f6; padding: 10px 14px; border-radius: 8px; font-weight: 700; color: #1e40af;">
+                        <span>REGULAR Ticket</span>
+                        <span>₹{{ "%.2f"|format(event.regular_price) }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <a class="btn" style="width: 100%; text-align: center; padding: 14px; font-size: 1.05rem;" href="{{ url_for('booking.web_create_booking', event_id=event.id) }}">
+                🎟 Select Seats & Book Tickets
+            </a>
         </div>
     </div>
 </div>
-<div class="card" style="margin-top:20px">
-    <h2>Reviews</h2>
+
+<div class="card" style="margin-top: 24px;">
+    <h2 style="font-size: 1.3rem; margin-bottom: 16px;">Reviews & Feedback</h2>
+
+    {% if current_user.get('role') == 'CUSTOMER' %}
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+        <h3 style="font-size: 1.05rem; margin-bottom: 12px; font-weight: 700;">Leave a Review</h3>
+        <form method="POST" action="{{ url_for('review.web_add_review', event_id=event.id) }}">
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; font-weight: 600; margin-bottom: 4px; font-size: 0.9rem;">Rating</label>
+                <select name="rating" style="width: 100%; max-width: 220px; padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1;" required>
+                    <option value="5">⭐⭐⭐⭐⭐ (5 - Excellent)</option>
+                    <option value="4">⭐⭐⭐⭐ (4 - Good)</option>
+                    <option value="3">⭐⭐⭐ (3 - Average)</option>
+                    <option value="2">⭐⭐ (2 - Poor)</option>
+                    <option value="1">⭐ (1 - Terrible)</option>
+                </select>
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; font-weight: 600; margin-bottom: 4px; font-size: 0.9rem;">Your Review</label>
+                <textarea name="comment" rows="3" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; font-family: inherit;" placeholder="Share your experience at this event..."></textarea>
+            </div>
+            <button class="btn" type="submit" style="padding: 8px 18px;">Submit Review</button>
+        </form>
+    </div>
+    {% endif %}
+
     {% for review in reviews|default([]) %}
-    <p><b>{{ review.user.name }}</b> <span class="rating">★ {{ review.rating }}/5</span><br>{{ review.comment }}</p>
+    <div style="border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 12px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+            <strong>{{ review.user.name if review.user else 'Anonymous' }}</strong>
+            <span class="rating" style="color: #f59e0b; font-weight: 700;">★ {{ review.rating }}/5</span>
+        </div>
+        <p style="margin: 0; color: #475569;">{{ review.comment or review.review_text }}</p>
+    </div>
     {% else %}
-    <p class="muted">No reviews yet.</p>
+    <p class="muted">No reviews yet for this event.</p>
     {% endfor %}
 </div>
 {% endblock %}

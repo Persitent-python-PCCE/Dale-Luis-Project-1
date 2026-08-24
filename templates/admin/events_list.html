@@ -1,28 +1,74 @@
 {% extends 'base.html' %}
+{% block title %}Manage Events - Admin{% endblock %}
+
 {% block content %}
-  <style>.management-table{width:auto;min-width:0}.management-table th:last-child,.management-table td:last-child{white-space:nowrap}</style>
-  <div class="actions" style="justify-content:space-between"><h1>Events</h1></div>
-  <table class="management-table">
-    <tr><th>Name</th><th>Category</th><th>Venue</th><th>Date</th><th>Status</th><th>Action</th></tr>
-    {% for event in events %}
-      <tr>
-        <td>{{ event.name }}</td><td>{{ event.category }}</td><td>{{ event.venue.name if event.venue else '-' }}</td>
-        <td>{{ event.start_date }}</td><td>{{ event.status }}</td>
-        <td>
-          <div class="actions" style="flex-wrap:nowrap;align-items:center">
-            <a class="btn secondary" href="{{ url_for('event.web_get_event', event_id=event.id) }}">View</a>
-          {% if event.approval_status == 'PENDING' %}
-            <form method="POST" action="{{ url_for('event.web_approve_event', event_id=event.id) }}" style="display:inline"><button class="btn">Approve</button></form>
-            <form method="POST" action="{{ url_for('event.web_reject_event', event_id=event.id) }}" style="display:inline"><button class="btn danger" onclick="return confirm('Reject this event? It will remain visible to administrators.')">Reject</button></form>
-          {% elif event.approval_status == 'REJECTED' %}
-            <span class="badge status-warning">Rejected</span>
-            <form method="POST" action="{{ url_for('event.web_delete_event', event_id=event.id) }}" style="display:inline"><button class="btn danger" onclick="return confirm('Permanently delete this rejected event?')">Delete</button></form>
-          {% else %}
-            <span class="badge status-success">Approved</span>
-            <form method="POST" action="{{ url_for('event.web_delete_event', event_id=event.id) }}" style="display:inline"><button class="btn danger" onclick="return confirm('Permanently delete this event?')">Delete</button></form>
-          {% endif %}</div>
-        </td>
-      </tr>
-    {% else %}<tr><td colspan="6">No events found.</td></tr>{% endfor %}
-  </table>
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+    <h1 style="margin:0; font-size:1.75rem; font-weight:800;">All Events (Admin Management)</h1>
+    <a class="btn" href="{{ url_for('event.web_create_event') }}">➕ Create Event</a>
+  </div>
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Event Name</th>
+          <th>Category</th>
+          <th>Venue</th>
+          <th>Start Date</th>
+          <th>18+</th>
+          <th>Approval Status</th>
+          <th style="text-align: right;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for event in events %}
+          <tr>
+            <td><strong>{{ event.name }}</strong></td>
+            <td><span class="badge">{{ event.category.name if event.category.name is defined else event.category }}</span></td>
+            <td>{{ event.venue.name if event.venue else '-' }}</td>
+            <td>{{ event.start_date }}</td>
+            <td>
+              {% if event.is_18_plus %}
+                <span class="badge" style="background:#fee2e2; color:#b91c1c;">18+</span>
+              {% else %}
+                <span class="badge" style="background:#f1f5f9; color:#64748b;">General</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if event.approval_status == 'APPROVED' %}
+                <span class="badge status-success">APPROVED</span>
+              {% elif event.approval_status == 'REJECTED' %}
+                <span class="badge status-danger">REJECTED</span>
+              {% else %}
+                <span class="badge status-warning">PENDING</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="actions" style="justify-content: flex-end;">
+                <a class="btn secondary" style="padding: 6px 12px; font-size: 0.8rem;" href="{{ url_for('event.web_get_event', event_id=event.id) }}">View</a>
+                {% if event.approval_status == 'PENDING' %}
+                  <form method="POST" action="{{ url_for('event.web_approve_event', event_id=event.id) }}" style="display:inline;">
+                    <button class="btn success" style="padding: 6px 12px; font-size: 0.8rem;">Approve</button>
+                  </form>
+                  <form method="POST" action="{{ url_for('event.web_reject_event', event_id=event.id) }}" style="display:inline;">
+                    <button class="btn danger" style="padding: 6px 12px; font-size: 0.8rem;" onclick="return confirm('Reject this event?')">Reject</button>
+                  </form>
+                {% elif event.approval_status == 'REJECTED' %}
+                  <form method="POST" action="{{ url_for('event.web_delete_event', event_id=event.id) }}" style="display:inline;">
+                    <button class="btn danger" style="padding: 6px 12px; font-size: 0.8rem;" onclick="return confirm('Delete this rejected event?')">Delete</button>
+                  </form>
+                {% else %}
+                  <form method="POST" action="{{ url_for('event.web_delete_event', event_id=event.id) }}" style="display:inline;">
+                    <button class="btn danger" style="padding: 6px 12px; font-size: 0.8rem;" onclick="return confirm('Delete this event?')">Delete</button>
+                  </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="7" style="text-align:center; padding:30px;" class="muted">No events found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 {% endblock %}

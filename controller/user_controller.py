@@ -9,7 +9,7 @@ user_bp = Blueprint("user", __name__)
 user_service = UserService(UserDAO())
 
 
-@user_bp.route("/v1/users", methods=["GET"])
+@user_bp.route("/api/users", methods=["GET"])
 @role_required("ADMIN")
 def get_users():
     users = user_service.get_all_users()
@@ -19,7 +19,7 @@ def get_users():
     }), 200
     
 
-@user_bp.route("/v1/users/<int:user_id>", methods=["GET"])
+@user_bp.route("/api/users/<int:user_id>", methods=["GET"])
 @role_required("ADMIN")
 def get_user(user_id):
     try:
@@ -53,7 +53,7 @@ def search_users():
         }), 400
         
 
-@user_bp.route("/v1/users/<int:user_id>/role", methods=["PUT"])
+@user_bp.route("/api/users/<int:user_id>/role", methods=["PUT"])
 @role_required("ADMIN")
 def change_role(user_id):
     data = request.get_json()
@@ -72,7 +72,7 @@ def change_role(user_id):
         }), 400
     
     
-@user_bp.route("/v1/users/<int:user_id>/deactivate",methods=["PUT"])
+@user_bp.route("/api/users/<int:user_id>/deactivate",methods=["PUT"])
 @role_required("ADMIN")
 def deactivate_user(user_id):
     try:
@@ -87,10 +87,7 @@ def deactivate_user(user_id):
             "message": str(e)
         }), 400
 
-@user_bp.route(
-    "/api/users/<int:user_id>/activate",
-    methods=["PUT"]
-)
+@user_bp.route("/api/users/<int:user_id>/activate",methods=["PUT"])
 @role_required("ADMIN")
 def activate_user(user_id):
     try:

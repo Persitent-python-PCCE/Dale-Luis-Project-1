@@ -1,4 +1,9 @@
 from models.event import Event
+from models.booking import Booking
+from models.notification import Notification
+from config.database import db
+from datetime import datetime, date, time
+from utils.file_upload import delete_poster
 
 class EventService:
     
@@ -53,19 +58,38 @@ class EventService:
         ]
 
         for field in required:
-
             if not data.get(field):
                 raise ValueError(f"{field} is required")
 
         category = self.category_dao.get_by_id(data["category_id"])
-
         if category is None:
             raise ValueError("Category not found")
 
         venue = self.venue_dao.get_by_id(data["venue_id"])
-
         if venue is None:
             raise ValueError("Venue not found")
+
+        start_date = data["start_date"]
+        if isinstance(start_date, str):
+            start_date = date.fromisoformat(start_date)
+
+        end_date = data["end_date"]
+        if isinstance(end_date, str):
+            end_date = date.fromisoformat(end_date)
+
+        start_time = data["start_time"]
+        if isinstance(start_time, str):
+            start_time = time.fromisoformat(start_time)
+
+        end_time = data["end_time"]
+        if isinstance(end_time, str):
+            end_time = time.fromisoformat(end_time)
+
+        is_18_plus = data.get("is_18_plus", False)
+        if isinstance(is_18_plus, str):
+            is_18_plus = is_18_plus.lower() in ("true", "1", "yes", "on")
+        else:
+            is_18_plus = bool(is_18_plus)
 
         event = Event(
             name=data["name"],
@@ -73,14 +97,15 @@ class EventService:
             poster_path=data.get("poster_path"),
             category_id=data["category_id"],
             venue_id=data["venue_id"],
-            start_date=data["start_date"],
-            end_date=data["end_date"],
-            start_time=data["start_time"],
-            end_time=data["end_time"],
+            start_date=start_date,
+            end_date=end_date,
+            start_time=start_time,
+            end_time=end_time,
             maximum_capacity=data["maximum_capacity"],
             vip_price=data["vip_price"],
             premium_price=data["premium_price"],
             regular_price=data["regular_price"],
+            is_18_plus=is_18_plus,
             created_by=manager_id,
             status="UPCOMING",
             approval_status="PENDING"
@@ -88,10 +113,10 @@ class EventService:
 
         return self.event_dao.save(event)
     
-    def update_event(self,id,data,manager_id):
+    def update_event(self, id, data, manager_id, is_admin=False):
         event = self.get_event(id)
 
-        if event.created_by != manager_id:
+        if event.created_by != manager_id and not is_admin:
             raise ValueError("You can only edit your own events")
 
         if "name" in data:
@@ -100,8 +125,17 @@ class EventService:
         if "description" in data:
             event.description = data["description"]
 
-        if "poster_path" in data:
+        if "poster_path" in data and data["poster_path"] != event.poster_path:
+            if event.poster_path:
+                delete_poster(event.poster_path)
             event.poster_path = data["poster_path"]
+
+        if "is_18_plus" in data:
+            val = data["is_18_plus"]
+            if isinstance(val, str):
+                event.is_18_plus = val.lower() in ("true", "1", "yes", "on")
+            else:
+                event.is_18_plus = bool(val)
 
         if "category_id" in data:
             event.category_id = data["category_id"]
@@ -122,20 +156,62 @@ class EventService:
             event.regular_price = data["regular_price"]
 
         if "start_date" in data:
-            event.start_date = data["start_date"]
+            val = data["start_date"]
+            event.start_date = date.fromisoformat(val) if isinstance(val, str) else val
 
         if "end_date" in data:
-            event.end_date = data["end_date"]
+            val = data["end_date"]
+            event.end_date = date.fromisoformat(val) if isinstance(val, str) else val
 
         if "start_time" in data:
-            event.start_time = data["start_time"]
+            val = data["start_time"]
+            event.start_time = time.fromisoformat(val) if isinstance(val, str) else val
 
         if "end_time" in data:
-            event.end_time = data["end_time"]
+            val = data["end_time"]
+            event.end_time = time.fromisoformat(val) if isinstance(val, str) else val
 
-        event.approval_status = "PENDING"
+        event_was_cancelled = event.status == "CANCELLED"
+
+        if "status" in data:
+            status = data["status"]
+            if status not in {"UPCOMING", "COMPLETED", "CANCELLED"}:
+                raise ValueError("Invalid event status")
+            event.status = status
+
+        if event.status == "CANCELLED" and not event_was_cancelled:
+            self._cancel_bookings_and_notify_customers(event)
 
         return self.event_dao.update(event)
+
+    @staticmethod
+    def _cancel_bookings_and_notify_customers(event):
+        """Cancel confirmed bookings and initiate their mock-payment refunds."""
+        confirmed_bookings = Booking.query.filter_by(
+            event_id=event.id,
+            status="CONFIRMED",
+        ).all()
+
+        for booking in confirmed_bookings:
+            booking.status = "CANCELLED"
+            booking.cancelled_at = datetime.utcnow()
+            booking.cancellation_reason = "Event cancelled by the event manager"
+
+            payment = booking.payment
+            if payment and payment.status == "SUCCESS":
+                payment.refund_status = "COMPLETED"
+                payment.refund_amount = payment.amount
+                payment.refunded_at = datetime.utcnow()
+
+            db.session.add(Notification(
+                user_id=booking.user_id,
+                booking_id=booking.id,
+                event_id=event.id,
+                message=(
+                    f"{event.name} has been cancelled. Your ticket payment "
+                    "will be refunded."
+                ),
+            ))
     
     def delete_event(self, id, manager_id, is_admin=False):
         event = self.get_event(id)
@@ -144,6 +220,9 @@ class EventService:
             raise ValueError(
                 "You can only delete your own events"
             )
+
+        if event.poster_path:
+            delete_poster(event.poster_path)
 
         return self.event_dao.delete(event)
     

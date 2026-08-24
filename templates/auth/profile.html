@@ -1,18 +1,83 @@
 {% extends 'base.html' %}
+{% block title %}My Profile - TicketFlow{% endblock %}
+
 {% block content %}
-<div class="card">
-    <h1>My Profile</h1>
-    <div class="detail-grid">
+<div class="card" style="max-width: 900px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 1px solid #e2e8f0; padding-bottom: 16px;">
         <div>
-            <p><b>Name:</b> {{ user.name }}</p>
-            <p><b>Email:</b> {{ user.email }}</p>
-            <p><b>Phone:</b> {{ user.phone or '-' }}</p>
-            <p><b>Role:</b> <span class="badge">{{ user.role }}</span></p>
+            <h1 style="margin: 0; font-size: 1.75rem; font-weight: 800;">My Profile Settings</h1>
+            <p class="muted" style="margin: 4px 0 0 0;">View and manage your account information</p>
         </div>
+        <span class="nav-user-badge" style="font-size: 0.85rem; padding: 6px 14px;">{{ user.role }}</span>
+    </div>
+
+    <div class="detail-grid" style="gap: 32px;">
+        <!-- Left Side: Profile Summary Card -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px;">
+            <h2 style="font-size: 1.2rem; margin-bottom: 16px; color: #1e293b;">Account Overview</h2>
+            
+            <div style="display: flex; flex-direction: column; gap: 14px; font-size: 0.95rem;">
+                <div>
+                    <span class="muted" style="font-size: 0.8rem; display: block;">FULL NAME</span>
+                    <strong style="font-size: 1.05rem;">{{ user.name }}</strong>
+                </div>
+                <div>
+                    <span class="muted" style="font-size: 0.8rem; display: block;">EMAIL ADDRESS</span>
+                    <strong>{{ user.email }}</strong>
+                </div>
+                <div>
+                    <span class="muted" style="font-size: 0.8rem; display: block;">PHONE NUMBER</span>
+                    <strong>{{ user.phone or 'Not provided' }}</strong>
+                </div>
+                <div>
+                    <span class="muted" style="font-size: 0.8rem; display: block;">ACCOUNT ROLE</span>
+                    <span class="badge">{{ user.role }}</span>
+                </div>
+                <div>
+                    <span class="muted" style="font-size: 0.8rem; display: block;">ACCOUNT STATUS</span>
+                    <span class="badge status-success">ACTIVE</span>
+                </div>
+            </div>
+
+            <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #cbd5e1;">
+                <a class="btn secondary" style="width: 100%; text-align: center;" href="{{ url_for('booking.web_my_bookings') }}">
+                    🎟 View My Bookings
+                </a>
+            </div>
+        </div>
+
+        <!-- Right Side: Edit Profile Form -->
         <div>
-            <h3>Account status</h3>
-            <p class="muted">Manage your personal information and booking activity.</p>
-            <a class="btn secondary" href="{{ url_for('booking.web_my_bookings') }}">View Bookings</a>
+            <h2 style="font-size: 1.2rem; margin-bottom: 16px; color: #1e293b;">Edit Information</h2>
+            
+            <form method="POST" action="{{ url_for('auth.web_profile') }}">
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" name="name" value="{{ user.name }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Email Address *</label>
+                    <input type="email" name="email" value="{{ user.email }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="text" name="phone" value="{{ user.phone or '' }}" placeholder="10-digit phone number (e.g. 9876543210)" pattern="[0-9]{10}" maxlength="10">
+                </div>
+
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" name="password" placeholder="••••••••">
+                    <small class="muted" style="display: block; margin-top: 4px; font-size: 0.8rem;">
+                        Leave blank if you do not wish to change your password.
+                    </small>
+                </div>
+
+                <button class="btn" type="submit" style="width: 100%; padding: 12px; margin-top: 8px;">
+                    💾 Save Profile Changes
+                </button>
+            </form>
         </div>
     </div>
 </div>

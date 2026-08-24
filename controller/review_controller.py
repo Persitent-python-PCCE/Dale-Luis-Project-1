@@ -10,11 +10,11 @@ review_bp = Blueprint("review",__name__)
 
 review_service = ReviewService(ReviewDAO())
 
-@review_bp.route("/v1/events/<int:event_id>/reviews",methods=["POST"])
+@review_bp.route("/api/events/<int:event_id>/reviews",methods=["POST"])
 @role_required("CUSTOMER")
 @limiter.limit("5 per hour")
 def add_review(event_id):
-    data = request.get_json()
+    data = request.get_json() or {}
     user_id = int(get_jwt_identity())
 
     try:
@@ -30,7 +30,7 @@ def add_review(event_id):
             "message": str(e)
         }), 400
 
-@review_bp.route("/v1/events/<int:event_id>/reviews",methods=["GET"])
+@review_bp.route("/api/events/<int:event_id>/reviews",methods=["GET"])
 def get_reviews(event_id):
     reviews = review_service.get_event_reviews(event_id)
 

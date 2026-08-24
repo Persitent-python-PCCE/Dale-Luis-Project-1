@@ -17,7 +17,8 @@ class EventDAO:
 
     def get_approved_events(self):
         return Event.query.filter_by(
-            approval_status="APPROVED"
+            approval_status="APPROVED",
+            status="UPCOMING",
         ).all()
 
     def get_by_creator(self, user_id):
@@ -43,7 +44,7 @@ class EventDAO:
         ).all()
 
     def filter_approved_events(self, search=None, category_id=None, event_date=None):
-        query = Event.query.filter_by(approval_status="APPROVED")
+        query = Event.query.filter_by(approval_status="APPROVED", status="UPCOMING")
 
         if search:
             query = query.filter(Event.name.ilike(f"%{search}%"))
@@ -56,7 +57,8 @@ class EventDAO:
 
     def get_pending_events(self):
         return Event.query.filter_by(
-            approval_status="PENDING"
+            approval_status="PENDING",
+            status="UPCOMING",
         ).all()
 
     def get_by_status(self, status):
@@ -75,7 +77,6 @@ class EventDAO:
         return event
 
     def delete(self, event):
-        """Permanently delete an event and data that depends on it."""
         try:
             booking_ids = [
                 booking_id for (booking_id,) in db.session.query(Booking.id)

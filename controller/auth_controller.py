@@ -9,7 +9,7 @@ auth_bp = Blueprint('auth', __name__)
 user_service = UserService(UserDAO())
 
 #API JSON
-@auth_bp.route('/v1/register', methods=["POST"])
+@auth_bp.route('/api/register', methods=["POST"])
 @limiter.limit("5 per hour")
 def register():
     
@@ -28,7 +28,7 @@ def register():
             "message" : str(e)
         }), 400
         
-@auth_bp.route('/v1/login', methods=["POST"])
+@auth_bp.route('/api/login', methods=["POST"])
 @limiter.limit("10 per minute")
 def login():
     data = request.get_json()
@@ -70,7 +70,7 @@ def login():
         }), 401
         
 
-@auth_bp.route('/v1/me', methods = ["GET"])
+@auth_bp.route('/api/me', methods = ["GET"])
 @jwt_required()
 def current_user():
     user_id = get_jwt_identity()
@@ -82,8 +82,24 @@ def current_user():
         "email" : claims.get("email"),
         "role" : claims.get("role")
     }), 200
+
+@auth_bp.route('/api/me', methods=["PUT"])
+@jwt_required()
+def update_current_user_api():
+    user_id = int(get_jwt_identity())
+    data = request.get_json()
+    try:
+        user = user_service.update_user_profile(user_id, data)
+        return jsonify({
+            "message": "Profile updated successfully",
+            "user": user.to_dict()
+        }), 200
+    except ValueError as e:
+        return jsonify({
+            "message": str(e)
+        }), 400
     
-@auth_bp.route("/v1/logout", methods=["POST"])
+@auth_bp.route("/api/logout", methods=["POST"])
 @jwt_required()
 def logout():
     return jsonify({
@@ -93,7 +109,6 @@ def logout():
 
 #browser 
 @auth_bp.route("/register", methods=["GET","POST"])
-@limiter.limit("5 per hour")
 def web_register():
     if request.method == "POST":
         data = {"name": request.form.get("name","").strip(),
@@ -116,7 +131,6 @@ def web_register():
     return render_template("auth/register.html")
 
 @auth_bp.route("/login",methods=["GET","POST"])
-@limiter.limit("10 per minute")
 def web_login():
     if request.method == "POST":
         email = request.form.get("email","").strip()
@@ -153,10 +167,34 @@ def web_login():
     
     return render_template("auth/login.html")
 
-@auth_bp.route("/profile", methods=["GET"])
+@auth_bp.route("/profile", methods=["GET", "POST"])
 @jwt_required()
 def web_profile():
-    user = user_service.get_user(int(get_jwt_identity()))
+    user_id = int(get_jwt_identity())
+    if request.method == "POST":
+        data = {
+            "name": request.form.get("name", "").strip(),
+            "email": request.form.get("email", "").strip(),
+            "phone": request.form.get("phone", "").strip(),
+            "password": request.form.get("password", "")
+        }
+        try:
+            user = user_service.update_user_profile(user_id, data)
+            flash("Profile updated successfully", "success")
+            
+            additional_claims = {
+                "role": user.role,
+                "email": user.email,
+                "name": user.name
+            }
+            access_token = create_access_token(identity=str(user.id), additional_claims=additional_claims)
+            response = make_response(render_template("auth/profile.html", user=user))
+            set_access_cookies(response, access_token)
+            return response
+        except ValueError as e:
+            flash(str(e), "danger")
+
+    user = user_service.get_user(user_id)
     return render_template("auth/profile.html", user=user)
     
 @auth_bp.route("/logout")

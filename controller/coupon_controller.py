@@ -9,7 +9,7 @@ coupon_bp = Blueprint("coupon",__name__)
 
 coupon_service = CouponService(CouponDAO())
 
-@coupon_bp.route("/v1/coupons",methods=["GET"])
+@coupon_bp.route("/api/coupons",methods=["GET"])
 @role_required("ADMIN")
 def get_coupons():
     coupons = coupon_service.get_all_coupons()
@@ -18,7 +18,7 @@ def get_coupons():
         "coupons": [c.to_dict() for c in coupons]
     }), 200
     
-@coupon_bp.route("/v1/coupons",methods=["POST"])
+@coupon_bp.route("/api/coupons",methods=["POST"])
 @role_required("ADMIN")
 def create_coupon():
     data = request.get_json()
@@ -37,7 +37,7 @@ def create_coupon():
             "message": str(e)
         }), 400
         
-@coupon_bp.route("/v1/coupons/apply",methods=["POST"])
+@coupon_bp.route("/api/coupons/apply",methods=["POST"])
 @role_required("CUSTOMER")
 @limiter.limit("10 per minute")
 def apply_coupon():
@@ -60,7 +60,7 @@ def apply_coupon():
             "message": str(e)
         }), 400
 
-@coupon_bp.route("/v1/coupons/<int:coupon_id>",methods=["PUT"])
+@coupon_bp.route("/api/coupons/<int:coupon_id>",methods=["PUT"])
 @role_required("ADMIN")
 def update_coupon(coupon_id):
     data = request.get_json()
@@ -78,7 +78,7 @@ def update_coupon(coupon_id):
             "message": str(e)
         }), 400
         
-@coupon_bp.route("/v1/coupons/<int:coupon_id>/deactivate",methods=["PUT"])
+@coupon_bp.route("/api/coupons/<int:coupon_id>/deactivate",methods=["PUT"])
 @role_required("ADMIN")
 def deactivate_coupon(coupon_id):
 

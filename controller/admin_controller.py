@@ -9,7 +9,7 @@ from models.user import User
 
 admin_bp = Blueprint("admin",__name__)
 
-@admin_bp.route("/v1/admin/dashboard",methods=["GET"])
+@admin_bp.route("/api/admin/dashboard",methods=["GET"])
 @role_required("ADMIN")
 def dashboard():
     return jsonify({

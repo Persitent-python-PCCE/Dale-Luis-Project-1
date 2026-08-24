@@ -8,7 +8,7 @@ venue_bp = Blueprint("venue", __name__)
 
 venue_service = VenueService(VenueDAO())
 
-@venue_bp.route("/v1/venues", methods=["GET"])
+@venue_bp.route("/api/venues", methods=["GET"])
 def get_venues():
     
     venues = venue_service.get_all_venues()
@@ -16,7 +16,7 @@ def get_venues():
         "venues": [v.to_dict()for v in venues]
     }), 200
     
-@venue_bp.route("/v1/venues/<int:venue_id>",methods=["GET"])
+@venue_bp.route("/api/venues/<int:venue_id>",methods=["GET"])
 def get_venue(venue_id):
     try:
         venue = venue_service.get_venue(venue_id)
@@ -30,7 +30,7 @@ def get_venue(venue_id):
             "message": str(e)
         }), 404
 
-@venue_bp.route("/v1/venues", methods=["POST"])
+@venue_bp.route("/api/venues", methods=["POST"])
 @role_required("ADMIN")
 def create_venue():
     data = request.get_json()
@@ -49,7 +49,7 @@ def create_venue():
             "message": str(e)
         }), 400
         
-@venue_bp.route("/v1/venues/<int:venue_id>",methods=["PUT"])
+@venue_bp.route("/api/venues/<int:venue_id>",methods=["PUT"])
 @role_required("ADMIN")
 def update_venue(venue_id):
     data = request.get_json()
@@ -67,7 +67,7 @@ def update_venue(venue_id):
             "message": str(e)
         }), 400
         
-@venue_bp.route("/v1/venues/<int:venue_id>",methods=["DELETE"])
+@venue_bp.route("/api/venues/<int:venue_id>",methods=["DELETE"])
 @role_required("ADMIN")
 def delete_venue(venue_id):
     try:

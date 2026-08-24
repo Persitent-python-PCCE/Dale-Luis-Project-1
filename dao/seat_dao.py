@@ -24,8 +24,6 @@ class SeatDAO:
         return seat
     
     def get_and_lock_seats(self,seat_ids):
-        # Acquire locks in a consistent order to reduce deadlocks when two
-        # customers try to reserve overlapping sets of seats.
         seats = (
             Seat.query
             .filter(Seat.id.in_(sorted(seat_ids)))
@@ -40,7 +38,59 @@ class SeatDAO:
         return Seat.query.filter_by(
             venue_id=venue_id,
             is_active=True
-        ).all()
+        ).order_by(Seat.id).all()
+
+    def ensure_venue_seats(self, venue_id, target_capacity):
+        if not target_capacity or target_capacity <= 0:
+            target_capacity = 50
+
+        existing_seats = Seat.query.filter_by(venue_id=venue_id).all()
+        existing_numbers = {s.seat_number for s in existing_seats}
+
+        if len(existing_seats) < target_capacity:
+            seats_per_row = 10 if target_capacity <= 100 else 20
+            new_seats = []
+
+            for idx in range(1, target_capacity + 1):
+                row_idx = (idx - 1) // seats_per_row
+                seat_in_row = ((idx - 1) % seats_per_row) + 1
+
+                if row_idx < 26:
+                    row_letter = chr(65 + row_idx)
+                else:
+                    row_letter = f"R{row_idx + 1}"
+
+                seat_number = f"{row_letter}{seat_in_row}"
+
+                if seat_number in existing_numbers:
+                    continue
+
+                if row_idx == 0:
+                    category = "VIP"
+                    base_price = 150.0
+                elif row_idx in (1, 2):
+                    category = "PREMIUM"
+                    base_price = 100.0
+                else:
+                    category = "REGULAR"
+                    base_price = 50.0
+
+                new_seat = Seat(
+                    venue_id=venue_id,
+                    seat_number=seat_number,
+                    row_name=row_letter,
+                    category=category,
+                    base_price=base_price,
+                    is_active=True,
+                )
+                new_seats.append(new_seat)
+                existing_numbers.add(seat_number)
+
+            if new_seats:
+                db.session.add_all(new_seats)
+                db.session.commit()
+
+        return Seat.query.filter_by(venue_id=venue_id, is_active=True).order_by(Seat.id).all()
 
     def get_by_category(self, venue_id, category):
         return Seat.query.filter_by(

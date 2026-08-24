@@ -1,26 +1,76 @@
 {% extends 'base.html' %}
+{% block title %}My Events - Event Manager{% endblock %}
+
 {% block content %}
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px"><h1 style="margin:0">My Events</h1><a class="btn" style="width:auto;white-space:nowrap" href="{{ url_for('event.web_create_event') }}">Create Event</a></div>
-  <table>
-    <tr><th>Poster</th><th>Name</th><th>Venue</th><th>Date</th><th>Approval</th><th>Tickets Sold</th><th>Action</th></tr>
-    {% for event in events %}
-      <tr>
-        <td><img src="{{ url_for('static', filename=event.poster_path) if event.poster_path else 'https://placehold.co/100x70?text=Event' }}" alt="{{ event.name }} poster" width="100" height="70" style="object-fit:cover;border-radius:8px"></td>
-        <td>{{ event.name }}</td>
-        <td>{{ event.venue.name if event.venue else '-' }}</td>
-        <td>{{ event.start_date }}</td>
-        <td>{{ event.approval_status }}</td>
-        <td>{{ ticket_counts.get(event.id, 0) }}</td>
-        <td><div class="actions" style="flex-wrap:nowrap;align-items:center;white-space:nowrap">
-          <a class="btn secondary" href="{{ url_for('event.web_get_event', event_id=event.id) }}">View</a>
-          <a class="btn secondary" href="{{ url_for('event.web_update_event', event_id=event.id) }}">Edit</a>
-          <form method="POST" action="{{ url_for('event.web_delete_event', event_id=event.id) }}" style="margin:0"><button class="btn danger" onclick="return confirm('Permanently delete this event?')">Delete</button></form>
-        </div></td>
-      </tr>
-    {% else %}
-    <tr>
-      <td colspan="7">You have not created any events yet.</td>
-    </tr>
-    {% endfor %}
-  </table>
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+    <h1 style="margin:0; font-size:1.75rem; font-weight:800;">My Created Events</h1>
+    <a class="btn" href="{{ url_for('event.web_create_event') }}">➕ Create New Event</a>
+  </div>
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Poster</th>
+          <th>Event Name</th>
+          <th>Venue</th>
+          <th>Start Date</th>
+          <th>18+</th>
+          <th>Approval Status</th>
+          <th>Tickets Sold</th>
+          <th style="text-align: right;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for event in events %}
+          <tr>
+            <td>
+              {% if event.poster_path %}
+                <img src="{{ url_for('static', filename=event.poster_path) }}" alt="{{ event.name }} poster" width="80" height="55" style="object-fit:cover; border-radius:8px;">
+              {% else %}
+                <div style="width:80px; height:55px; background:#e2e8f0; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.2rem;">🎟</div>
+              {% endif %}
+            </td>
+            <td>
+              <strong>{{ event.name }}</strong>
+            </td>
+            <td>{{ event.venue.name if event.venue else '-' }}</td>
+            <td>{{ event.start_date }}</td>
+            <td>
+              {% if event.is_18_plus %}
+                <span class="badge" style="background:#fee2e2; color:#b91c1c;">18+</span>
+              {% else %}
+                <span class="badge" style="background:#f1f5f9; color:#64748b;">General</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if event.approval_status == 'APPROVED' %}
+                <span class="badge status-success">APPROVED</span>
+              {% elif event.approval_status == 'REJECTED' %}
+                <span class="badge status-danger">REJECTED</span>
+              {% else %}
+                <span class="badge status-warning">PENDING</span>
+              {% endif %}
+            </td>
+            <td><strong>{{ ticket_counts.get(event.id, 0) }}</strong> tickets</td>
+            <td>
+              <div class="actions" style="justify-content: flex-end;">
+                <a class="btn secondary" style="padding: 6px 12px; font-size: 0.8rem;" href="{{ url_for('event.web_get_event', event_id=event.id) }}">View</a>
+                <a class="btn secondary" style="padding: 6px 12px; font-size: 0.8rem;" href="{{ url_for('event.web_update_event', event_id=event.id) }}">Edit</a>
+                <form method="POST" action="{{ url_for('event.web_delete_event', event_id=event.id) }}" style="margin:0;">
+                  <button class="btn danger" style="padding: 6px 12px; font-size: 0.8rem;" onclick="return confirm('Permanently delete this event?')">Delete</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        {% else %}
+        <tr>
+          <td colspan="8" style="text-align:center; padding:30px;" class="muted">
+            You have not created any events yet. Click "Create New Event" above to get started!
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 {% endblock %}

@@ -59,6 +59,8 @@ class Event(db.Model):
 
     rejection_reason = db.Column(db.Text,nullable=True)
 
+    is_18_plus = db.Column(db.Boolean, default=False, nullable=False)
+
     created_at = db.Column(db.DateTime,default=datetime.utcnow)
 
     updated_at = db.Column(db.DateTime,default=datetime.utcnow,onupdate=datetime.utcnow)
@@ -103,6 +105,7 @@ class Event(db.Model):
             "vip_price": float(self.vip_price),
             "premium_price": float(self.premium_price),
             "regular_price": float(self.regular_price),
+            "is_18_plus": self.is_18_plus,
             "status": self.status, 
             "approval_status": self.approval_status,
             "created_by": self.created_by, 

@@ -16,8 +16,11 @@ from controller.review_controller import review_bp
 from controller.user_controller import user_bp
 from controller.venue_controller import venue_bp
 
-def create_app():
+def create_app(test_config=None):
     app = Flask(__name__)
+
+    if test_config:
+        app.config.update(test_config)
 
     app.config["SECRET_KEY"] = os.getenv(
         "FLASK_SECRET_KEY", "change-this-flask-development-secret"
@@ -52,6 +55,12 @@ def create_app():
     with app.app_context():
         import models
         db.create_all()
+        try:
+            from sqlalchemy import text
+            db.session.execute(text("ALTER TABLE events ADD COLUMN is_18_plus TINYINT(1) NOT NULL DEFAULT 0;"))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
 
     @app.context_processor
     def inject_current_user():

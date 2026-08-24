@@ -9,12 +9,15 @@ class PaymentService:
         self.payment_dao = payment_dao
         self.booking_dao = booking_dao
 
-    def process_payment(self,booking_id,payment_method="MOCK",result="SUCCESS"):
+    def process_payment(self, booking_id, payment_method="MOCK", result="SUCCESS", user_id=None):
         try:
             booking = self.booking_dao.get_and_lock_by_id(booking_id)
 
             if booking is None:
                 raise ValueError("Booking not found")
+
+            if user_id is not None and booking.user_id != user_id:
+                raise ValueError("You cannot pay for another user's booking")
 
             if booking.status != "PENDING":
                 raise ValueError("Booking is not pending")

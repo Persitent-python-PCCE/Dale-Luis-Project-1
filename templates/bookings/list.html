@@ -1,23 +1,76 @@
 {% extends 'base.html' %}
+{% block title %}My Bookings - TicketFlow{% endblock %}
+
 {% block content %}
-<h1>My Bookings</h1>
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+    <h1 style="margin:0; font-size:1.75rem; font-weight:800;">My Ticket Bookings</h1>
+    <a class="btn secondary" href="{{ url_for('event.web_get_events') }}">🔍 Browse More Events</a>
+</div>
+
+{% for notification in notifications %}
+<div class="flash flash-warning">
+    <span>🔔 <strong>Notice:</strong> {{ notification.message }}</span>
+</div>
+{% endfor %}
+
 <div class="grid">
     {% for booking in bookings %}
-    <div class="card">
-        <span class="badge {{ 'status-success' if booking.status == 'CONFIRMED' else 'status-warning' }}">{{ booking.status }}</span>
-        <h2>{{ booking.event.name if booking.event else 'Event' }}</h2>
-        <p>Reference: <b>{{ booking.booking_reference }}</b></p>
-        <p>Total: ₹{{ booking.final_amount }}</p>
-        <div class="actions"><a class="btn" href="{{ url_for('booking.web_booking_details', booking_id=booking.id) }}">View Ticket</a>
-            {% if booking.status == 'CONFIRMED' %}
-            <form method="POST" action="{{ url_for('booking.web_cancel_booking', booking_id=booking.id) }}">
-                <button class="btn danger">Cancel</button>
-            </form>
+    <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <span class="badge {{ 'status-success' if booking.status == 'CONFIRMED' else ('status-danger' if booking.status == 'CANCELLED' else 'status-warning') }}">
+                    {{ booking.status }}
+                </span>
+                <span style="font-size: 0.8rem; font-family: monospace; color: #64748b; font-weight: 700;">
+                    #{{ booking.booking_reference }}
+                </span>
+            </div>
+
+            <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 8px;">
+                {{ booking.event.name if booking.event else 'Event' }}
+            </h2>
+
+            {% if booking.event %}
+            <p class="muted" style="font-size: 0.85rem; margin-bottom: 12px;">
+                📅 {{ booking.event.start_date }} &bull; 📍 {{ booking.event.venue.name if booking.event.venue else 'Venue' }}
+            </p>
             {% endif %}
+
+            {% if booking.status == 'CANCELLED' and booking.cancellation_reason %}
+            <div style="background: #fee2e2; border: 1px solid #fca5a5; padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; color: #991b1b; margin-bottom: 12px;">
+                <strong>Reason:</strong> {{ booking.cancellation_reason }}
+                {% if booking.payment and booking.payment.refund_status == 'COMPLETED' %}
+                <div style="color: #15803d; font-weight: 700; margin-top: 4px;">
+                    ✓ Refunded: ₹{{ "%.2f"|format(booking.payment.refund_amount) }}
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <div>
+            <div style="font-size: 1.15rem; font-weight: 800; color: var(--primary); margin-bottom: 16px;">
+                Total: ₹{{ "%.2f"|format(booking.final_amount) }}
+            </div>
+
+            <div class="actions">
+                <a class="btn" style="flex: 1; text-align: center;" href="{{ url_for('booking.web_booking_details', booking_id=booking.id) }}">
+                    🎟 View Ticket & QR
+                </a>
+                {% if booking.status == 'CONFIRMED' %}
+                <form method="POST" action="{{ url_for('booking.web_cancel_booking', booking_id=booking.id) }}" style="margin: 0;">
+                    <button class="btn danger" onclick="return confirm('Are you sure you want to cancel this booking?')">Cancel</button>
+                </form>
+                {% endif %}
+            </div>
         </div>
     </div>
     {% else %}
-    <p>No bookings found.</p>
+    <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+        <h3>No bookings yet</h3>
+        <p class="muted" style="margin-bottom: 16px;">You haven't booked tickets for any upcoming events.</p>
+        <a class="btn" href="{{ url_for('event.web_get_events') }}">Explore Available Events</a>
+    </div>
     {% endfor %}
 </div>
 {% endblock %}

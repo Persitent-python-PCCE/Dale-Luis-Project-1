@@ -1,38 +1,53 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>{% block title %}TicketFlow{% endblock %}</title>
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    </head>
-    <body>
-        {% if current_user %}
-            <nav class="navbar">
-                <a class="brand" href="{{ url_for('event.web_get_events') }}">🎟 TicketFlow</a>
-                <div class="nav-links">
-                    {% if current_user.get('role') == 'ADMIN' %}
-                        <a href="{{ url_for('admin.web_dashboard') }}">Dashboard</a>
-                        <a href="{{ url_for('event.web_get_events') }}">View Events</a>
-                        <a href="{{ url_for('venue.web_get_venues') }}">View Venues</a>
-                        <a href="{{ url_for('coupon.web_get_coupons') }}">View Coupons</a>
-                        <a href="{{ url_for('user.web_get_users') }}">View Users</a>
-                    {% elif current_user.get('role') == 'EVENT_MANAGER' %}
-                        <a href="{{ url_for('event.web_get_events') }}">My Events</a>
-                        <a href="{{ url_for('event.web_create_event') }}">Create Event</a>
-                    {% else %}
-                        <a href="{{ url_for('event.web_get_events') }}">Events</a>
-                        <a href="{{ url_for('booking.web_my_bookings') }}">My Bookings</a>
-                    {% endif %}
-                    <a href="{{ url_for('auth.web_profile') }}">Profile</a>
-                    <a href="{{ url_for('auth.web_logout') }}">Logout</a>
-                </div>
-            </nav>
-        {% endif %}
-        <main class="container">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}{% for category,message in messages %}<div class="flash">{{ message }}</div>{% endfor %}{% endif %}
-            {% endwith %}
-            {% block content %}{% endblock %}
-        </main>
-        <footer class="footer">TicketFlow • Secure Event Ticket Booking Platform</footer>
-    </body></html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}TicketFlow - Event Ticket Booking{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    {% if current_user %}
+    <nav class="navbar">
+        <a class="brand" href="{{ url_for('event.web_get_events') }}">
+            <span class="brand-icon">🎟</span> TicketFlow
+        </a>
+        <div class="nav-links">
+            <span class="nav-user-badge">{{ current_user.get('role') }}</span>
+            {% if current_user.get('role') == 'ADMIN' %}
+                <a href="{{ url_for('admin.web_dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('event.web_get_events') }}">Events</a>
+                <a href="{{ url_for('venue.web_get_venues') }}">Venues</a>
+                <a href="{{ url_for('coupon.web_get_coupons') }}">Coupons</a>
+                <a href="{{ url_for('user.web_get_users') }}">Users</a>
+            {% elif current_user.get('role') == 'EVENT_MANAGER' %}
+                <a href="{{ url_for('event.web_get_events') }}">My Events</a>
+                <a href="{{ url_for('event.web_create_event') }}">Create Event</a>
+            {% else %}
+                <a href="{{ url_for('event.web_get_events') }}">Browse Events</a>
+                <a href="{{ url_for('booking.web_my_bookings') }}">My Bookings</a>
+            {% endif %}
+            <a href="{{ url_for('auth.web_profile') }}">Profile</a>
+            <a href="{{ url_for('auth.web_logout') }}" style="color: #f87171;">Logout</a>
+        </div>
+    </nav>
+    {% endif %}
+
+    <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {% if category == 'danger' %}flash-danger{% elif category == 'success' %}flash-success{% elif category == 'warning' %}flash-warning{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <p><strong>TicketFlow</strong> &bull; Premium Event Ticket Management & Booking Platform &copy; 2026</p>
+    </footer>
+</body>
+</html>

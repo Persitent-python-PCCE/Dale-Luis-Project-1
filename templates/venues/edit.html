@@ -1,29 +1,48 @@
 {% extends 'base.html' %}
+{% block title %}Edit Venue - {{ venue.name }}{% endblock %}
+
 {% block content %}
-<div class="card">
-    <h1>Edit Venue</h1>
+<div class="card" style="max-width: 800px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 1px solid #e2e8f0; padding-bottom: 16px;">
+        <div>
+            <h1 style="margin: 0; font-size: 1.75rem; font-weight: 800;">Edit Venue</h1>
+            <p class="muted" style="margin: 4px 0 0 0;">Update venue details and capacity settings</p>
+        </div>
+        <a class="btn secondary" href="{{ url_for('venue.web_get_venues') }}">← Back to Venues</a>
+    </div>
+
     <form method="POST">
-        <div class="grid">
-            <div class="form-group">
-                <label>Name</label>
-                <input name="name" value="{{ venue.name }}">
+        <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px;">
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label>Venue Name *</label>
+                <input type="text" name="name" value="{{ venue.name }}" required>
             </div>
+
             <div class="form-group">
-                <label>Location</label>
-                <input name="location" value="{{ venue.location }}">
+                <label>City / Location *</label>
+                <input type="text" name="location" value="{{ venue.location }}" required>
             </div>
+
             <div class="form-group">
-                <label>Maximum Capacity</label>
-                <input name="maximum_capacity" value="{{ venue.maximum_capacity }}">
+                <label>Maximum Seating Capacity *</label>
+                <input type="number" name="maximum_capacity" min="1" value="{{ venue.maximum_capacity }}" required>
+            </div>
+
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label>Full Address *</label>
+                <textarea name="address" required style="min-height: 80px;">{{ venue.address }}</textarea>
+            </div>
+
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label>Venue Description</label>
+                <textarea name="description">{{ venue.description }}</textarea>
             </div>
         </div>
-        <div class="form-group">
-            <label>Address</label>
-            <textarea name="address">{{ venue.address }}</textarea>
-        </div><div class="form-group">
-            <label>Description</label>
-            <textarea name="description">{{ venue.description }}</textarea>
-        </div><button class="btn">Save Changes</button>
+
+        <div style="display: flex; gap: 16px; justify-content: flex-end; margin-top: 24px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
+            <a class="btn secondary" href="{{ url_for('venue.web_get_venues') }}">Cancel</a>
+            <button class="btn" type="submit" style="padding: 12px 32px; font-size: 1rem;">💾 Save Venue Changes</button>
+        </div>
     </form>
 </div>
 {% endblock %}

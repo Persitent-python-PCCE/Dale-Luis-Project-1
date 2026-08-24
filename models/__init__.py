@@ -10,3 +10,4 @@ from models.review import Review
 from models.user_event_preference import UserEventPreference
 from models.coupon import Coupon
 from models.user_document import UserDocument
+from models.notification import Notification

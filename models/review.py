@@ -36,6 +36,14 @@ class Review(db.Model):
                             name="uq_user_event_review"),
         )
 
+    @property
+    def comment(self):
+        return self.review_text
+
+    @comment.setter
+    def comment(self, value):
+        self.review_text = value
+
     def to_dict(self):
         return {
             "id": self.id, 
@@ -44,6 +52,7 @@ class Review(db.Model):
             "booking_id": self.booking_id, 
             "rating": self.rating,
             "review_text": self.review_text,
+            "comment": self.review_text,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
