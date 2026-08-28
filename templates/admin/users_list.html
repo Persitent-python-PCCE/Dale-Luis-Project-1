@@ -12,19 +12,23 @@
         <td>{{ 'Active' if user.is_active else 'Deactivated' }}</td>
         <td>
           <div class="actions" style="flex-wrap:nowrap">
-            <a class="btn secondary" href="{{ url_for('user.web_edit_user', user_id=user.id) }}">Edit</a>{% if user.is_active %}
+            <a class="btn secondary" href="{{ url_for('user.web_edit_user', user_id=user.id) }}">Edit</a>
+            {% if user.is_active %}
             <form method="POST" action="{{ url_for('user.web_deactivate_account', user_id=user.id) }}">
               <button class="btn warning" onclick="return confirm('Deactivate this user?')">Deactivate</button>
-            </form>{% else %}
+            </form>
+            {% else %}
             <form method="POST" action="{{ url_for('user.web_activate_user', user_id=user.id) }}">
               <button class="btn success">Activate</button>
-            </form>{% endif %}
+            </form>
+            {% endif %}
             <form method="POST" action="{{ url_for('user.web_delete_user', user_id=user.id) }}">
               <button class="btn danger" onclick="return confirm('Permanently delete this user and related records? This cannot be undone.')">Delete</button>
             </form>
           </div>
         </td>
       </tr>
-    {% else %}<tr><td colspan="6">No users found.</td></tr>{% endfor %}
+    {% else %}<tr><td colspan="6">No users found.</td></tr>
+    {% endfor %}
   </table>
 {% endblock %}

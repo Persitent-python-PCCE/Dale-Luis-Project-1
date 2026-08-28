@@ -69,7 +69,7 @@ def create_app(test_config=None):
 
     @jwt.expired_token_loader
     def expired_token_callback(_jwt_header, _jwt_payload):
-        if request.path.startswith(("/v1/", "/v2/", "/api/")):
+        if request.path.startswith(("/api/")):
             return jsonify({"msg": "Token has expired"}), 401
 
         response = redirect(url_for("auth.web_login"))
