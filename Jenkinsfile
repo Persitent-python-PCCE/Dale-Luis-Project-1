@@ -3,39 +3,47 @@ pipeline {
 
     stages {
 
-        stage('Checkout'){
-            steps{
+        stage('Checkout') {
+            steps {
                 checkout scm
             }
         }
 
-        stage('Install Dependencies'){
-            steps{
-                sh 'pip install -r requirements.txt'
-            }
-        }
-
-        stage('Test'){
+        stage('Install Dependencies') {
             steps {
-                sh 'pytest'
+                sh '''
+                    python3 -m venv venv
+                    ./venv/bin/pip install --upgrade pip
+                    ./venv/bin/pip install -r requirements.txt
+                '''
             }
         }
 
-        stage('Build Docker Image'){
-            steps{
-                sh 'docker build -t dale09/flask-app:latest'
+        stage('Test') {
+            steps {
+                sh '''
+                    ./venv/bin/pytest
+                '''
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh '''
+                    docker build -t dale09/flask-app:latest .
+                '''
             }
         }
 
         stage('Push to Docker Hub') {
-            steps{
+            steps {
                 withCredentials([
                     usernamePassword(
                         credentialsId: 'docker-creds',
                         usernameVariable: 'DOCKER_USER',
                         passwordVariable: 'DOCKER_PASS'
                     )
-                ]){
+                ]) {
                     sh '''
                         echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
                         docker push dale09/flask-app:latest
@@ -43,7 +51,5 @@ pipeline {
                 }
             }
         }
-
     }
-
-} 
+}
