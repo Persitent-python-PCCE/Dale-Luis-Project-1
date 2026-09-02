@@ -59,7 +59,7 @@ pipeline {
     post{
         success{
             emailext(
-                subject: "Success: ${env.JOB_NAME} BUILD #${env.BUILD_NUMBER}"
+                subject: "Success: ${env.JOB_NAME} BUILD #${env.BUILD_NUMBER}",
                 body: """
                     <h2>Jenkins was successful</h1>
                     <p>
@@ -71,7 +71,7 @@ pipeline {
         }
         failure{
             emailext(
-                subject: "Failure: ${env.JOB_NAME} BUILD #${env.BUILD_NUMBER}"
+                subject: "Failure: ${env.JOB_NAME} BUILD #${env.BUILD_NUMBER}",
                 body: """
                     <h2>Jenkins Failed</h1>
                     <p>
