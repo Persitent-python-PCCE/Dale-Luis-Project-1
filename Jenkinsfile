@@ -56,4 +56,29 @@ pipeline {
             }
         }
     }
+    post{
+        success{
+            emailext(
+                subject: "Success: ${env.JOB_NAME} BUILD #${env.BUILD_NUMber}"
+                body: """
+                    <h2>Jenkins was successful</h1>
+                    <p>
+                        <b>URL</b>: ${env.BUILD_URL}
+                    </p>
+                """,
+                to: "dalerioluis@gmail.com"
+            )
+        }
+        failure{
+            emailext(
+                subject: "Failure: ${env.JOB_NAME} BUILD #${env.BUILD_NUMber}"
+                body: """
+                    <h2>Jenkins Failed</h1>
+                    <p>
+                        <b>URL</b>: ${env.BUILD_URL}
+                    </p>
+                """,
+                to: "dalerioluis@gmail.com"
+        }
+    }
 }
