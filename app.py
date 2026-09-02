@@ -79,11 +79,20 @@ def create_app(test_config=None):
     @app.route("/")
     def home():
         return redirect(url_for("auth.web_login"))
+
+    @app.route("/health")
+    def health():
+        try:
+            return jsonify({"status": "healthy"}), 200
+        except Exception:
+            return jsonify({"status": "unhealthy"}), 503
+
     return app
+
 
 
 app = create_app()
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
